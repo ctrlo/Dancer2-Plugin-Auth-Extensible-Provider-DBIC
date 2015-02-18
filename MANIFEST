@@ -1,0 +1,7 @@
+README
+lib/Dancer2/Plugin/Auth/Extensible/Provider/DBIC.pm
+MANIFEST
+MANIFEST.SKIP
+ignore.txt
+Makefile.PL
+Changes
