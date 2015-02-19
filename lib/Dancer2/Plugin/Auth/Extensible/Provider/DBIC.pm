@@ -93,6 +93,8 @@ sub new {
     my ($class, $realm_settings, $dsl) = @_;
 
     # Grab a handle to the Plugin::DBIC schema
+    die "No schema method in app. Did you load DBIC::Plugin::DBIC before DBIC::Plugin::Auth::Extensible?"
+        unless $dsl->can('schema');
     my $schema = $dsl->schema;
 
     my $self = {
