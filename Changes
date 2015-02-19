@@ -1,1 +1,5 @@
 Revision history for Dancer2-Plugin-Auth-Extensible-Provider-DBIC
+
+0.304 Thu Feb 19 17:00:00 2015 GMT
+
+    * Initial release, version based on DPAE
