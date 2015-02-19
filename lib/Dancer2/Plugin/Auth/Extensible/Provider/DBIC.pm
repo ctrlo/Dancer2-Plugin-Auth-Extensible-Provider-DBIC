@@ -24,8 +24,7 @@ appropriately; see the L</CONFIGURATION> section below for how to configure this
 authentication provider with database details.
 
 See L<Dancer2::Plugin::Auth::Extensible> for details on how to use the
-authentication framework, including how to pick a more useful authentication
-provider.
+authentication framework.
 
 
 =head1 CONFIGURATION
