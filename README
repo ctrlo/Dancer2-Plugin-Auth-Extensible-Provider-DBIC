@@ -1,0 +1,72 @@
+NAME
+    Dancer2::Plugin::Auth::Extensible::Provider::DBIC - authenticate via the
+    Dancer2::Plugin::DBIC plugin
+
+DESCRIPTION
+    This class is an authentication provider designed to authenticate users
+    against a database, using Dancer2::Plugin::DBIC to access a database.
+
+    See Dancer2::Plugin::DBIC for how to configure a database connection
+    appropriately; see the "CONFIGURATION" section below for how to
+    configure this authentication provider with database details.
+
+    See Dancer2::Plugin::Auth::Extensible for details on how to use the
+    authentication framework.
+
+CONFIGURATION
+    This provider tries to use sensible defaults, in the same manner as
+    Dancer2::Plugin::Auth::Extensible::Provider::Database, so you may not
+    need to provide much configuration if your database tables look similar
+    to those.
+
+    The most basic configuration, assuming defaults for all options, and
+    defining a single authentication realm named 'users':
+
+        plugins:
+            Auth::Extensible:
+                realms:
+                    users:
+                        provider: 'DBIC'
+
+    You would still need to have provided suitable database connection
+    details to Dancer2::Plugin::DBIC, of course; see the docs for that
+    plugin for full details, but it could be as simple as, e.g.:
+
+        plugins:
+            Auth::Extensible:
+                realms:
+                    users:
+                        provider: 'DBIC'
+            DBIC:
+                default:
+                    dsn: dbi:mysql:database=mydb;host=localhost
+                    schema_class: MyApp::Schema
+                    user: user
+                    pass: secret
+
+    A full example showing all options:
+
+        plugins:
+            Auth::Extensible:
+                realms:
+                    users:
+                        provider: 'DBIC'
+
+                        # optionally specify names of tables if they're not the defaults
+                        # (defaults are 'users', 'roles' and 'user_roles')
+                        users_table: 'users'
+                        roles_table: 'roles'
+                        user_roles_table: 'user_roles'
+
+                        # optionally set the column names
+                        users_username_column: 'username'
+                        users_password_column: 'password'
+                        roles_role_column: 'role'
+
+    See the main Dancer2::Plugin::Auth::Extensible documentation for how to
+    configure multiple authentication realms.
+
+SUGGESTED SCHEMA
+    See the Dancer2::Plugin::Auth::Extensible::Provider::Database
+    documentation for an example schema.
+
