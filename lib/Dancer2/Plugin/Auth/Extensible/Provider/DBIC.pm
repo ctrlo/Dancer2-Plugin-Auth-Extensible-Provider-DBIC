@@ -10,7 +10,7 @@ our $VERSION = '0.304';
 
 =head1 NAME 
 
-Dancer2::Plugin::Auth::Extensible::DBIC - authenticate via the
+Dancer2::Plugin::Auth::Extensible::Provider::DBIC - authenticate via the
 L<Dancer2::Plugin::DBIC> plugin
 
 
