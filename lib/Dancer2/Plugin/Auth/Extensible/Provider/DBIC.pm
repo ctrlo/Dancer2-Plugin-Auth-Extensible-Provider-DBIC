@@ -77,6 +77,14 @@ A full example showing all options:
                     users_password_column: 'password'
                     roles_role_column: 'role'
 
+                    # Optionally set additional conditions when searching for the
+                    # user in the database. These are the same format as required
+                    # by DBIC, and are passed directly to the DBIC resultset search
+                    user_valid_conditions:
+                        deleted: 0
+                        account_request:
+                            "<": 1
+
 See the main L<Dancer2::Plugin::Auth::Extensible> documentation for how to
 configure multiple authentication realms.
 
@@ -107,14 +115,17 @@ sub new {
 # Returns a DBIC rset for the user
 sub _user {
     my ($self, $username) = @_;
-    my $settings        = $self->realm_settings;
-    my $users_table     = $settings->{users_table}           || 'users';
-    my $username_column = $settings->{users_username_column} || 'username';
+    my $settings              = $self->realm_settings;
+    my $users_table           = $settings->{users_table}           || 'users';
+    my $username_column       = $settings->{users_username_column} || 'username';
+    my $user_valid_conditions = $settings->{user_valid_conditions} || {};
+
+    # Search based on standard username search, plus any additional
+    # conditions in ignore_user
+    my $search = { %$user_valid_conditions, $username_column => $username };
 
     # Look up the user
-    $self->_schema->resultset(camelize $users_table)->search({
-        $username_column => $username,
-    });
+    $self->_schema->resultset(camelize $users_table)->search($search);
 }
 
 sub _dsl_local { shift->{dsl_local} };
