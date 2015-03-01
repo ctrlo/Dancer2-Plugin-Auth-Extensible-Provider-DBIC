@@ -1,5 +1,9 @@
 Revision history for Dancer2-Plugin-Auth-Extensible-Provider-DBIC
 
+0.306 Sat Feb 21 10:12:00 2015 GMT
+
+    * Add META files
+
 0.305 Fri Feb 20 15:45:00 2015 GMT
 
     * Fix incorrect dependencies
