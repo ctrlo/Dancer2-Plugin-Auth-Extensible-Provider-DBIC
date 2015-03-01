@@ -89,8 +89,65 @@ A full example showing all options:
                     # Roles will be returned as role_name => 1 hashref pairs
                     roles_key: roles
 
-See the main L<Dancer2::Plugin::Auth::Extensible> documentation for how to
-configure multiple authentication realms.
+=over
+
+=item users_table
+
+Specifies the database table that the users are stored in. This will be camelized.
+
+=item roles_table
+
+Specifies the database table that the roles are stored in. This will be camelized.
+
+=item user_roles_table
+
+Specifies the database table that holds the many-to-many relationship information
+between users and roles. It is assumed that the relationship is configured in
+the DBIC schema, such that a user has many entries in the user_roles table, and
+that each of those has one role. This table name will be pluralized.
+
+=item users_username_column
+
+Specifies the column name of the username column in the users table
+
+=item users_password_column
+
+Specifies the column name of the password column in the users table
+
+=item roles_role_column
+
+Specifies the column name of the role name column in the roles table
+
+=item user_valid_condition
+
+Specifies additional search parameters when looking up a user in the users table.
+For example, you might want to exclude any account this is flagged as deleted
+or disabled.
+
+The value of this parameter will be passed directly to DBIC as a search condition.
+It is therefore possible to nest parameters and use different operators for the
+condition. See the example config above for an example.
+
+=item roles_key
+
+Specifies a key for the returned user hash to also return the user's roles in.
+The value of this key will contain a hash ref, which will contain each
+permission with a value of 1. In your code you might then have:
+
+    my $user = logged_in_user;
+    return foo_bar($user);
+
+    sub foo_bar
+    {   my $user = shift;
+        if ($user->{roles}->{beer_drinker}) {
+           ...
+        }
+    }
+
+This isn't intended to replace the L<Dancer2::Plugin::Auth::Extensible/user_has_role>
+keyword. Instead it is intended to make it easier to access a user's roles if the
+user hash is being passed around (without requiring access to the user_has_role
+keyword in other modules).
 
 =head1 SUGGESTED SCHEMA
 
