@@ -85,6 +85,10 @@ A full example showing all options:
                         account_request:
                             "<": 1
 
+                    # Optionally specify a key for the user's roles to be returned in.
+                    # Roles will be returned as role_name => 1 hashref pairs
+                    roles_key: roles
+
 See the main L<Dancer2::Plugin::Auth::Extensible> documentation for how to
 configure multiple authentication realms.
 
@@ -168,6 +172,11 @@ sub get_user_details {
         $self->_dsl_local->debug("No such user $username");
         return;
     } else {
+        if (my $roles_key = $self->realm_settings->{roles_key}) {
+            my @roles = @{$self->get_user_roles($username)};
+            my %roles = map { $_ => 1 } @roles;
+            $user->{$roles_key} = \%roles;
+        }
         return $user;
     }
 }
