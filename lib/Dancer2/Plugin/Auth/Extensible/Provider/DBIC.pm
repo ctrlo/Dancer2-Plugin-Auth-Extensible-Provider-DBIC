@@ -165,6 +165,15 @@ sub new {
         unless $dsl->can('schema');
     my $schema = $dsl->schema;
 
+    # Set default values
+    $realm_settings->{users_table}           ||= 'users';
+    $realm_settings->{users_username_column} ||= 'username';
+    $realm_settings->{user_valid_conditions} ||= {};
+    $realm_settings->{users_password_column} ||= 'password';
+    $realm_settings->{roles_table}           ||= 'roles';
+    $realm_settings->{user_roles_table}      ||= 'user_roles';
+    $realm_settings->{roles_role_column}     ||= 'role';
+
     my $self = {
         realm_settings => $realm_settings,
         dsl_local      => $dsl,
@@ -174,12 +183,12 @@ sub new {
 }
 
 # Returns a DBIC rset for the user
-sub _user {
+sub _user_rset {
     my ($self, $username) = @_;
     my $settings              = $self->realm_settings;
-    my $users_table           = $settings->{users_table}           || 'users';
-    my $username_column       = $settings->{users_username_column} || 'username';
-    my $user_valid_conditions = $settings->{user_valid_conditions} || {};
+    my $users_table           = $settings->{users_table};
+    my $username_column       = $settings->{users_username_column};
+    my $user_valid_conditions = $settings->{user_valid_conditions};
 
     # Search based on standard username search, plus any additional
     # conditions in ignore_user
@@ -207,7 +216,7 @@ sub authenticate_user {
     # OK, we found a user, let match_password (from our base class) take care of
     # working out if the password is correct
     my $settings        = $self->realm_settings;
-    my $password_column = $settings->{users_password_column} || 'password';
+    my $password_column = $settings->{users_password_column};
     return $self->match_password($password, $user->{$password_column});
 }
 
@@ -219,7 +228,7 @@ sub get_user_details {
     return unless defined $username;
 
     # Look up the user
-    my $users_rs = $self->_user($username);
+    my $users_rs = $self->_user_rset($username);
 
     # Inflate to a hashref, otherwise it's returned as a DBIC rset
     $users_rs->result_class('DBIx::Class::ResultClass::HashRefInflator');
@@ -238,19 +247,72 @@ sub get_user_details {
     }
 }
 
+# Update a user. Username is provided in the update details
+sub set_user_details {
+    my ($self, $username, %update) = @_;
+
+    die "Username to update needs to be specified"
+        unless $username;
+
+    # Look up the user
+    my ($user) = $self->_user_rset($username)->all;
+
+    # Are we expecting a user_roles key?
+    if (my $roles_key = $self->realm_settings->{roles_key}) {
+        if (my $new_roles = delete $update{$roles_key}) {
+
+            my $settings              = $self->realm_settings;
+            my $users_table           = $settings->{users_table};
+            my $roles_table           = $settings->{roles_table};
+            my $user_roles_table      = $settings->{user_roles_table};
+            my $roles_role_column     = $settings->{roles_role_column};
+            my $users_username_column = $settings->{users_username_column};
+
+            my @all_roles      = $self->_schema->resultset(camelize $roles_table)->all;
+            my %existing_roles = map { $_ => 1 } @{$self->get_user_roles($username)};
+
+            foreach my $role (@all_roles) {
+                my $role_name = $role->name;
+                if ($new_roles->{$role_name} && !$existing_roles{$role_name}) {
+                    # Needs to be added
+                    $self->_schema->resultset(camelize $user_roles_table)->create({
+                        $users_table => {
+                            $users_username_column => $username,
+                            %{$settings->{user_valid_conditions}}
+                        },
+                        $roles_table => { $roles_role_column => $role_name },
+                    });
+                }
+                elsif (!$new_roles->{$role_name} && $existing_roles{$role_name}) {
+                    # Needs to be removed
+                    $self->_schema->resultset(camelize $user_roles_table)->search({
+                        "$users_table.$users_username_column" => $username,
+                        "$roles_table.$roles_role_column"     => $role_name,
+                    },{
+                        join => [ $users_table, $roles_table ],
+                    })->delete;
+                }
+            }
+        }
+    }
+
+    $user->update({%update});
+    return $self->get_user_details($username);
+}
+
 sub get_user_roles {
     my ($self, $username) = @_;
 
-    my ($user) = $self->_user($username)->all;
+    my ($user) = $self->_user_rset($username)->all;
     if (!$user) {
         $self->_dsl_local->debug("No such user $username when looking for roles");
         return;
     }
 
     my $settings          = $self->realm_settings;
-    my $roles_table       = $settings->{roles_table}       || 'roles';
-    my $user_roles_table  = $settings->{user_roles_table}  || 'user_roles';
-    my $roles_role_column = $settings->{roles_role_column} || 'role';
+    my $roles_table       = $settings->{roles_table};
+    my $user_roles_table  = $settings->{user_roles_table};
+    my $roles_role_column = $settings->{roles_role_column};
     $user_roles_table     = Lingua::EN::Inflect::Phrase::to_PL($user_roles_table);
 
     my @roles;
