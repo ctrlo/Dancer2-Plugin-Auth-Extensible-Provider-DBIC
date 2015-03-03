@@ -77,6 +77,9 @@ A full example showing all options:
                     users_password_column: 'password'
                     roles_role_column: 'role'
 
+                    # Optionally set the name of the DBIC schema
+                    dbic_schema: myschema
+
                     # Optionally set additional conditions when searching for the
                     # user in the database. These are the same format as required
                     # by DBIC, and are passed directly to the DBIC resultset search
@@ -118,7 +121,12 @@ Specifies the column name of the password column in the users table
 
 Specifies the column name of the role name column in the roles table
 
-=item user_valid_condition
+=item dbic_schema
+
+Specfies the name of the L<Dancer2::Plugin::DBIC> schema to use. If not
+specified, will default in the same manner as the DBIC plugin.
+
+=item user_valid_conditions
 
 Specifies additional search parameters when looking up a user in the users table.
 For example, you might want to exclude any account this is flagged as deleted
@@ -163,7 +171,9 @@ sub new {
     # Grab a handle to the Plugin::DBIC schema
     die "No schema method in app. Did you load DBIC::Plugin::DBIC before DBIC::Plugin::Auth::Extensible?"
         unless $dsl->can('schema');
-    my $schema = $dsl->schema;
+    my $schema = $realm_settings->{dbic_schema}
+               ? $dsl->schema($realm_settings->{dbic_schema})
+               : $dsl->schema;
 
     # Set default values
     $realm_settings->{users_table}           ||= 'users';
