@@ -78,7 +78,7 @@ A full example showing all options:
                     roles_role_column: 'role'
 
                     # Optionally set the name of the DBIC schema
-                    dbic_schema: myschema
+                    schema_name: myschema
 
                     # Optionally set additional conditions when searching for the
                     # user in the database. These are the same format as required
@@ -121,7 +121,7 @@ Specifies the column name of the password column in the users table
 
 Specifies the column name of the role name column in the roles table
 
-=item dbic_schema
+=item schema_name
 
 Specfies the name of the L<Dancer2::Plugin::DBIC> schema to use. If not
 specified, will default in the same manner as the DBIC plugin.
@@ -171,8 +171,8 @@ sub new {
     # Grab a handle to the Plugin::DBIC schema
     die "No schema method in app. Did you load DBIC::Plugin::DBIC before DBIC::Plugin::Auth::Extensible?"
         unless $dsl->can('schema');
-    my $schema = $realm_settings->{dbic_schema}
-               ? $dsl->schema($realm_settings->{dbic_schema})
+    my $schema = $realm_settings->{schema_name}
+               ? $dsl->schema($realm_settings->{schema_name})
                : $dsl->schema;
 
     # Set default values
