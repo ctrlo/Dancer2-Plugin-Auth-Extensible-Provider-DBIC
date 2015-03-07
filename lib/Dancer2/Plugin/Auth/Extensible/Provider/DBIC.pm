@@ -266,6 +266,7 @@ sub set_user_details {
 
     # Look up the user
     my ($user) = $self->_user_rset($username)->all;
+    $user or return;
 
     # Are we expecting a user_roles key?
     if (my $roles_key = $self->realm_settings->{roles_key}) {
