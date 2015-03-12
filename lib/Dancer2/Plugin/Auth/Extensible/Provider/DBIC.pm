@@ -92,6 +92,9 @@ A full example showing all options:
                     # Roles will be returned as role_name => 1 hashref pairs
                     roles_key: roles
 
+                    # Optionally specify the algorithm when encrypting new passwords
+                    encryption_algorithm: SHA-512
+
 =over
 
 =item users_table
@@ -194,15 +197,21 @@ sub new {
 
 # Returns a DBIC rset for the user
 sub _user_rset {
-    my ($self, $username) = @_;
+    my ($self, $column, $value) = @_;
     my $settings              = $self->realm_settings;
     my $users_table           = $settings->{users_table};
     my $username_column       = $settings->{users_username_column};
     my $user_valid_conditions = $settings->{user_valid_conditions};
 
+    my $search_column = $column eq 'username'
+                      ? $username_column
+                      : $column eq 'pw_reset_code'
+                      ? $settings->{users_pwresetcode_column}
+                      : $column;
+
     # Search based on standard username search, plus any additional
     # conditions in ignore_user
-    my $search = { %$user_valid_conditions, $username_column => $username };
+    my $search = { %$user_valid_conditions, $search_column => $value };
 
     # Look up the user
     $self->_schema->resultset(camelize $users_table)->search($search);
@@ -230,6 +239,13 @@ sub authenticate_user {
     return $self->match_password($password, $user->{$password_column});
 }
 
+sub set_user_password {
+    my ($self, $username, $password) = @_;
+    my $algorithm       = $self->realm_settings->{encryption_algorithm};
+    my $encrypted       = $self->encrypt_password($password, $algorithm);
+    my $password_column = $self->realm_settings->{users_password_column};
+    $self->set_user_details($username, $password_column => $encrypted);
+}
 
 # Return details about the user.  The user's row in the users table will be
 # fetched and all columns returned as a hashref.
@@ -238,7 +254,7 @@ sub get_user_details {
     return unless defined $username;
 
     # Look up the user
-    my $users_rs = $self->_user_rset($username);
+    my $users_rs = $self->_user_rset(username => $username);
 
     # Inflate to a hashref, otherwise it's returned as a DBIC rset
     $users_rs->result_class('DBIx::Class::ResultClass::HashRefInflator');
@@ -257,6 +273,17 @@ sub get_user_details {
     }
 }
 
+# Find a user based on a password reset code
+sub get_user_by_code {
+    my ($self, $code) = @_;
+
+    my $username_column = $self->realm_settings->{users_username_column};
+    my $users_rs        = $self->_user_rset(pw_reset_code => $code);
+    my ($user)          = $users_rs->all;
+    return unless $user;
+    $user->$username_column;
+}
+
 # Update a user. Username is provided in the update details
 sub set_user_details {
     my ($self, $username, %update) = @_;
@@ -264,15 +291,16 @@ sub set_user_details {
     die "Username to update needs to be specified"
         unless $username;
 
+    my $settings = $self->realm_settings;
+
     # Look up the user
-    my ($user) = $self->_user_rset($username)->all;
+    my ($user) = $self->_user_rset(username => $username)->all;
     $user or return;
 
     # Are we expecting a user_roles key?
     if (my $roles_key = $self->realm_settings->{roles_key}) {
         if (my $new_roles = delete $update{$roles_key}) {
 
-            my $settings              = $self->realm_settings;
             my $users_table           = $settings->{users_table};
             my $roles_table           = $settings->{roles_table};
             my $user_roles_table      = $settings->{user_roles_table};
@@ -307,6 +335,13 @@ sub set_user_details {
         }
     }
 
+    # Move password reset code between keys if required
+    if (my $users_pwresetcode_column = $settings->{users_pwresetcode_column}) {
+        if (exists $update{pw_reset_code}) {
+            my $pw_reset_code = delete $update{pw_reset_code};
+            $update{$users_pwresetcode_column} = $pw_reset_code;
+        }
+    }
     $user->update({%update});
     return $self->get_user_details($username);
 }
@@ -314,7 +349,7 @@ sub set_user_details {
 sub get_user_roles {
     my ($self, $username) = @_;
 
-    my ($user) = $self->_user_rset($username)->all;
+    my ($user) = $self->_user_rset(username => $username)->all;
     if (!$user) {
         $self->_dsl_local->debug("No such user $username when looking for roles");
         return;
