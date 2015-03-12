@@ -284,6 +284,17 @@ sub get_user_by_code {
     $user->$username_column;
 }
 
+sub create_user {
+    my ($self, %user) = @_;
+    my $settings        = $self->realm_settings;
+    my $users_table     = $settings->{users_table};
+    my $username_column = $settings->{users_username_column};
+    $self->_schema->resultset(camelize $users_table)->create({
+        $username_column => $user{username}
+    });
+    $self->set_user_details($user{username}, %user);
+}
+
 # Update a user. Username is provided in the update details
 sub set_user_details {
     my ($self, $username, %update) = @_;
