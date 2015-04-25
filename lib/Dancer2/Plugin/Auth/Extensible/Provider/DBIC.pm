@@ -197,7 +197,7 @@ sub new {
 
 # Returns a DBIC rset for the user
 sub _user_rset {
-    my ($self, $column, $value) = @_;
+    my ($self, $column, $value, $options) = @_;
     my $settings              = $self->realm_settings;
     my $users_table           = $settings->{users_table};
     my $username_column       = $settings->{users_username_column};
@@ -214,7 +214,7 @@ sub _user_rset {
     my $search = { %$user_valid_conditions, $search_column => $value };
 
     # Look up the user
-    $self->_schema->resultset(camelize $users_table)->search($search);
+    $self->_schema->resultset(camelize $users_table)->search($search, $options);
 }
 
 sub _dsl_local { shift->{dsl_local} };
@@ -360,17 +360,18 @@ sub set_user_details {
 sub get_user_roles {
     my ($self, $username) = @_;
 
-    my ($user) = $self->_user_rset(username => $username)->all;
-    if (!$user) {
-        $self->_dsl_local->debug("No such user $username when looking for roles");
-        return;
-    }
-
     my $settings          = $self->realm_settings;
     my $roles_table       = $settings->{roles_table};
     my $user_roles_table  = $settings->{user_roles_table};
     my $roles_role_column = $settings->{roles_role_column};
     $user_roles_table     = Lingua::EN::Inflect::Phrase::to_PL($user_roles_table);
+
+    my $options = { prefetch => { $user_roles_table => $roles_table } };
+    my ($user) = $self->_user_rset(username => $username, $options)->all;
+    if (!$user) {
+        $self->_dsl_local->debug("No such user $username when looking for roles");
+        return;
+    }
 
     my @roles;
     foreach my $ur ($user->$user_roles_table)
