@@ -81,6 +81,11 @@ A full example showing all options:
                     # Optionally set the column name:
                     users_lastlogin_column: lastlogin
 
+                    # Optionally set columns for
+                    # L<Dancer2::Plugin::Auth::Extensible/user_password>
+                    users_pwresetcode_column:   # Reset code column. No default.
+                    users_pwchanged_column:     # Time of reset column. No default.
+
                     # Optionally set the name of the DBIC schema
                     schema_name: myschema
 
@@ -258,10 +263,15 @@ sub authenticate_user {
 
 sub set_user_password {
     my ($self, $username, $password) = @_;
-    my $algorithm       = $self->realm_settings->{encryption_algorithm};
+    my $settings        = $self->realm_settings;
+    my $algorithm       = $settings->{encryption_algorithm};
     my $encrypted       = $self->encrypt_password($password, $algorithm);
-    my $password_column = $self->realm_settings->{users_password_column};
-    $self->set_user_details($username, $password_column => $encrypted);
+    my $password_column = $settings->{users_password_column};
+    my %update          = ($password_column => $encrypted);
+    if (my $pwchanged = $settings->{users_pwchanged_column}) {
+        $update{$pwchanged} = DateTime->now;
+    }
+    $self->set_user_details($username, %update);
 }
 
 # Return details about the user.  The user's row in the users table will be
@@ -281,7 +291,13 @@ sub get_user_details {
         $self->_dsl_local->debug("No such user $username");
         return;
     } else {
-        if (my $roles_key = $self->realm_settings->{roles_key}) {
+        my $settings = $self->realm_settings;
+        if (my $pwchanged = $settings->{users_pwchanged_column}) {
+            # Convert to DateTime object
+            my $db_parser = $self->_schema->storage->datetime_parser;
+            $user->{$pwchanged} = $db_parser->parse_datetime($user->{$pwchanged});
+        }
+        if (my $roles_key = $settings->{roles_key}) {
             my @roles = @{$self->get_user_roles($username)};
             my %roles = map { $_ => 1 } @roles;
             $user->{$roles_key} = \%roles;
