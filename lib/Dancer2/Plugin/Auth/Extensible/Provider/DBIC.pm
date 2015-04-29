@@ -73,9 +73,13 @@ A full example showing all options:
                     user_roles_table: 'user_roles'
 
                     # optionally set the column names
-                    users_username_column: 'username'
-                    users_password_column: 'password'
-                    roles_role_column: 'role'
+                    users_username_column: username
+                    users_password_column: password
+                    roles_role_column: role
+
+                    # This plugin supports the DPAE record_lastlogin functionality.
+                    # Optionally set the column name:
+                    users_lastlogin_column: lastlogin
 
                     # Optionally set the name of the DBIC schema
                     schema_name: myschema
@@ -179,13 +183,14 @@ sub new {
                : $dsl->schema;
 
     # Set default values
-    $realm_settings->{users_table}           ||= 'users';
-    $realm_settings->{users_username_column} ||= 'username';
-    $realm_settings->{user_valid_conditions} ||= {};
-    $realm_settings->{users_password_column} ||= 'password';
-    $realm_settings->{roles_table}           ||= 'roles';
-    $realm_settings->{user_roles_table}      ||= 'user_roles';
-    $realm_settings->{roles_role_column}     ||= 'role';
+    $realm_settings->{users_table}            ||= 'users';
+    $realm_settings->{users_username_column}  ||= 'username';
+    $realm_settings->{users_lastlogin_column} ||= 'lastlogin';
+    $realm_settings->{user_valid_conditions}  ||= {};
+    $realm_settings->{users_password_column}  ||= 'password';
+    $realm_settings->{roles_table}            ||= 'roles';
+    $realm_settings->{user_roles_table}       ||= 'user_roles';
+    $realm_settings->{roles_role_column}      ||= 'role';
 
     my $self = {
         realm_settings => $realm_settings,
@@ -226,7 +231,7 @@ sub _schema {
 }
 
 sub authenticate_user {
-    my ($self, $username, $password) = @_;
+    my ($self, $username, $password, %options) = @_;
 
     # Look up the user:
     my $user = $self->get_user_details($username);
@@ -236,7 +241,19 @@ sub authenticate_user {
     # working out if the password is correct
     my $settings        = $self->realm_settings;
     my $password_column = $settings->{users_password_column};
-    return $self->match_password($password, $user->{$password_column});
+    if (my $match = $self->match_password($password, $user->{$password_column})) {
+        if ($options{lastlogin}) {
+            my $db_parser = $self->_schema->storage->datetime_parser;
+            my $lastlogin = $db_parser->parse_datetime($user->{lastlogin});
+            $self->_dsl_local->app->session->write($options{lastlogin} => $lastlogin);
+            $self->set_user_details(
+                $username,
+                $self->realm_settings->{users_lastlogin_column} => DateTime->now,
+            );
+        }
+        return $match;
+    }
+    return; # Make sure we return nothing
 }
 
 sub set_user_password {
