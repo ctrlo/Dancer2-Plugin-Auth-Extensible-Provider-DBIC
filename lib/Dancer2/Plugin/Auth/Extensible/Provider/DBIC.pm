@@ -81,10 +81,14 @@ A full example showing all options:
                     # Optionally set the column name:
                     users_lastlogin_column: lastlogin
 
-                    # Optionally set columns for
-                    # L<Dancer2::Plugin::Auth::Extensible/user_password>
+                    # Optionally set columns for user_password functionality in
+                    # Dancer2::Plugin::Auth::Extensible
                     users_pwresetcode_column:   # Reset code column. No default.
                     users_pwchanged_column:     # Time of reset column. No default.
+
+                    # Days after which passwords expire. See logged_in_user_password_expired
+                    # functionality in Dancer2::Plugin::Auth::Extensible
+                    password_expiry_days:       # No default
 
                     # Optionally set the name of the DBIC schema
                     schema_name: myschema
@@ -295,7 +299,8 @@ sub get_user_details {
         if (my $pwchanged = $settings->{users_pwchanged_column}) {
             # Convert to DateTime object
             my $db_parser = $self->_schema->storage->datetime_parser;
-            $user->{$pwchanged} = $db_parser->parse_datetime($user->{$pwchanged});
+            $user->{$pwchanged} = $db_parser->parse_datetime($user->{$pwchanged})
+                if $user->{$pwchanged};
         }
         if (my $roles_key = $settings->{roles_key}) {
             my @roles = @{$self->get_user_roles($username)};
@@ -414,6 +419,21 @@ sub get_user_roles {
     }
 
     \@roles;
+}
+
+sub password_expired {
+    my ($self, $user) = @_;
+    my $settings = $self->realm_settings;
+    my $expiry   = $settings->{password_expiry_days}
+        or return 0; # No expiry set
+    if (my $pwchanged = $settings->{users_pwchanged_column}) {
+        my $last_changed = $user->{$pwchanged}
+            or return 1; # If not changed then report expired
+        my $duration     = $last_changed->delta_days(DateTime->now);
+        $duration->in_units('days') > $expiry ? 1 : 0;
+    } else {
+        die "users_pwchanged_column not configured";
+    }
 }
 
 1;
