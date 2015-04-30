@@ -329,10 +329,12 @@ sub create_user {
     my $settings        = $self->realm_settings;
     my $users_table     = $settings->{users_table};
     my $username_column = $settings->{users_username_column};
+    my $username        = $user{username}
+        or die "Username needs to be specified for create_user";
     $self->_schema->resultset(camelize $users_table)->create({
-        $username_column => $user{username}
+        $username_column => $username
     });
-    $self->set_user_details($user{username}, %user);
+    $self->set_user_details($username, %user);
 }
 
 # Update a user. Username is provided in the update details
