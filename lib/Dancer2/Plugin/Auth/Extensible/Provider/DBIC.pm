@@ -252,9 +252,11 @@ sub authenticate_user {
     my $password_column = $settings->{users_password_column};
     if (my $match = $self->match_password($password, $user->{$password_column})) {
         if ($options{lastlogin}) {
-            my $db_parser = $self->_schema->storage->datetime_parser;
-            my $lastlogin = $db_parser->parse_datetime($user->{lastlogin});
-            $self->_dsl_local->app->session->write($options{lastlogin} => $lastlogin);
+            if (my $lastlogin = $user->{lastlogin}) {
+                my $db_parser = $self->_schema->storage->datetime_parser;
+                $lastlogin    = $db_parser->parse_datetime($lastlogin);
+                $self->_dsl_local->app->session->write($options{lastlogin} => $lastlogin);
+            }
             $self->set_user_details(
                 $username,
                 $self->realm_settings->{users_lastlogin_column} => DateTime->now,
