@@ -28,4 +28,4 @@ resources:
   bugtracker: https://github.com/ctrlo/Dancer2-Plugin-Auth-Extensible-Provider-DBIC/issues
   homepage: https://github.com/ctrlo/Dancer2-Plugin-Auth-Extensible-Provider-DBIC/
   repository: https://github.com/ctrlo/Dancer2-Plugin-Auth-Extensible-Provider-DBIC
-version: '0.306'
+version: '0.400'

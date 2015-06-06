@@ -6,7 +6,7 @@ use DBIx::Class::ResultClass::HashRefInflator;
 use Lingua::EN::Inflect::Phrase;
 use String::CamelCase qw(camelize);
 
-our $VERSION = '0.306';
+our $VERSION = '0.400';
 
 =head1 NAME 
 

@@ -1,5 +1,22 @@
 Revision history for Dancer2-Plugin-Auth-Extensible-Provider-DBIC
 
+0.400 Sat Jun 6 20:00:00 2015 GMT
+
+    * Die if username not specified for create_user
+    * Prevent exceptions if lastlogin date missing
+    * Add password_expired functionality
+    * Add option to record time of password change
+    * Add lastlogin functionality
+    * Prefetch roles for better performance
+    * Add create_user handler
+    * Updates to support password functionality in DPAE
+    * Check for valid user before attempting DB update
+    * Add option schema_name to choose which DBIC schema to use
+    * Add set_user_details function to allow users to be updated
+    * Add better documentation for config options
+    * Add option to return user roles in user hash
+    * Add option to specify additional search criteria for user 
+
 0.306 Sat Feb 21 10:12:00 2015 GMT
 
     * Add META files
