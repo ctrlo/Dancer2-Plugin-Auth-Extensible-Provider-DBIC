@@ -396,6 +396,8 @@ sub set_user_details {
         }
     }
     $user->update({%update});
+    # Update $username if it was submitted in update
+    $username = $update{username} if $update{username};
     return $self->get_user_details($username);
 }
 
