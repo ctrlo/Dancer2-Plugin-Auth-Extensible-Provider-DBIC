@@ -1,5 +1,8 @@
 Revision history for Dancer2-Plugin-Auth-Extensible-Provider-DBIC
 
+0.401 Wed Jun 17 15:00:00 2015 GMT
+    * Fix user not being returned in update if username changed
+
 0.400 Sat Jun 6 20:00:00 2015 GMT
 
     * Die if username not specified for create_user
