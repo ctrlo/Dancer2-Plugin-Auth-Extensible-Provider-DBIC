@@ -83,8 +83,8 @@ A full example showing all options:
 
                     # Optionally set columns for user_password functionality in
                     # Dancer2::Plugin::Auth::Extensible
-                    users_pwresetcode_column:   # Reset code column. No default.
-                    users_pwchanged_column:     # Time of reset column. No default.
+                    users_pwresetcode_column: pw_reset_code
+                    users_pwchanged_column:   # Time of reset column. No default.
 
                     # Days after which passwords expire. See logged_in_user_password_expired
                     # functionality in Dancer2::Plugin::Auth::Extensible
@@ -192,14 +192,15 @@ sub new {
                : $dsl->schema;
 
     # Set default values
-    $realm_settings->{users_table}            ||= 'users';
-    $realm_settings->{users_username_column}  ||= 'username';
-    $realm_settings->{users_lastlogin_column} ||= 'lastlogin';
-    $realm_settings->{user_valid_conditions}  ||= {};
-    $realm_settings->{users_password_column}  ||= 'password';
-    $realm_settings->{roles_table}            ||= 'roles';
-    $realm_settings->{user_roles_table}       ||= 'user_roles';
-    $realm_settings->{roles_role_column}      ||= 'role';
+    $realm_settings->{users_table}              ||= 'users';
+    $realm_settings->{users_username_column}    ||= 'username';
+    $realm_settings->{users_lastlogin_column}   ||= 'lastlogin';
+    $realm_settings->{user_valid_conditions}    ||= {};
+    $realm_settings->{users_password_column}    ||= 'password';
+    $realm_settings->{roles_table}              ||= 'roles';
+    $realm_settings->{user_roles_table}         ||= 'user_roles';
+    $realm_settings->{roles_role_column}        ||= 'role';
+    $realm_settings->{users_pwresetcode_column} ||= 'pw_reset_code';
 
     my $self = {
         realm_settings => $realm_settings,
