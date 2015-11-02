@@ -185,7 +185,7 @@ sub new {
     my ($class, $realm_settings, $dsl) = @_;
 
     # Grab a handle to the Plugin::DBIC schema
-    die "No schema method in app. Did you load DBIC::Plugin::DBIC before DBIC::Plugin::Auth::Extensible?"
+    die "No schema method in app. Did you load Dancer2::Plugin::DBIC before Dancer2::Plugin::Auth::Extensible?"
         unless $dsl->can('schema');
     my $schema = $realm_settings->{schema_name}
                ? $dsl->schema($realm_settings->{schema_name})
