@@ -7,7 +7,6 @@ use Dancer2::Plugin::Auth::Extensible::Test;
 
 BEGIN {
     $ENV{DANCER_CONFDIR}     = 't/lib';
-    $ENV{DANCER_ENVIRONMENT} = 'provider-dbic';
 }
 
 {
