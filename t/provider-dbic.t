@@ -14,7 +14,7 @@ BEGIN {
     use Path::Tiny;
     use Dancer2;
     use Dancer2::Plugin::DBIC;
-    use Dancer2::Plugin::Auth::Extensible;
+    use Dancer2::Plugin::Auth::Extensible 0.500;
     use Dancer2::Plugin::Auth::Extensible::Test::App;
 
     my $schema1 = schema('schema1');

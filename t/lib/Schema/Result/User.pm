@@ -6,6 +6,8 @@ __PACKAGE__->add_columns(
     username => { data_type => 'varchar', size => 32 },
     password => { data_type => 'varchar', size => 40 },
     name     => { data_type => 'varchar', size => 128, is_nullable => 1 },
+    email    => { data_type => 'varchar', size => 255, is_nullable => 1 },
+    lastlogin => { data_type => 'datetime', is_nullable => 1 },
     pw_reset_code => { data_type => 'varchar', size => 255, is_nullable => 1 },
 );
 __PACKAGE__->set_primary_key('id');

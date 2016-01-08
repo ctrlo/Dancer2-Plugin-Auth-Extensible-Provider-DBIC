@@ -14,7 +14,7 @@ WriteMakefile(
     PREREQ_PM => {
         'Test::More'  => 0, # For future tests?
         'Dancer2::Plugin::DBIC' => 0,
-        'Dancer2::Plugin::Auth::Extensible' => 0.400,
+        'Dancer2::Plugin::Auth::Extensible' => 0.500,
         'DBIx::Class::ResultClass::HashRefInflator' => 0,
         'Lingua::EN::Inflect::Phrase' => 0,
         'String::CamelCase' => 0,
