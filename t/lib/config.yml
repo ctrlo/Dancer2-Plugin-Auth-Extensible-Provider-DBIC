@@ -16,9 +16,16 @@ plugins:
         users_table: user
         roles_table: role
         user_roles_table: user_role
+        record_lastlogin: 1
+        users_pwchanged_column: pw_changed
+        password_expiry_days: 1
+        user_valid_conditions:
+            deleted: 0
+        encryption_algorithm: SHA-512
       config2:
         provider: DBIC
         schema_name: schema2
         users_table: user
         roles_table: role
         user_roles_table: user_role
+        record_lastlogin: 0
