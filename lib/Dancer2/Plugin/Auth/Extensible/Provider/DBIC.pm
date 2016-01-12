@@ -173,6 +173,8 @@ keyword. Instead it is intended to make it easier to access a user's roles if th
 user hash is being passed around (without requiring access to the user_has_role
 keyword in other modules).
 
+=back
+
 =head1 SUGGESTED SCHEMA
 
 See the L<Dancer2::Plugin::Auth::Extensible::Provider::Database> documentation
