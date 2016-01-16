@@ -376,7 +376,7 @@ sub set_user_details {
             my %existing_roles = map { $_ => 1 } @{$self->get_user_roles($username)};
 
             foreach my $role (@all_roles) {
-                my $role_name = $role->name;
+                my $role_name = $role->$roles_role_column;
                 if ($new_roles->{$role_name} && !$existing_roles{$role_name}) {
                     # Needs to be added
                     $self->_schema->resultset(camelize $user_roles_table)->create({
