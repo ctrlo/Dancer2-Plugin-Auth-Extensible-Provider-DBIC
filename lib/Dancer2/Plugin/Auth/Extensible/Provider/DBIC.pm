@@ -341,7 +341,7 @@ sub create_user {
     my $settings        = $self->realm_settings;
     my $users_table     = $settings->{users_table};
     my $username_column = $settings->{users_username_column};
-    my $username        = $user{username}
+    my $username        = delete $user{username} # Prevent attempt to update wrong key
         or die "Username needs to be specified for create_user";
     $self->_schema->resultset(camelize $users_table)->create({
         $username_column => $username
