@@ -208,8 +208,10 @@ to configure these, and they will be generated internally automatically.
 
 =head1 SUGGESTED SCHEMA
 
-See the L<Dancer2::Plugin::Auth::Extensible::Provider::Database> documentation
-for an example schema.
+Please see Schema1 in the tests directory for a suggested schema.
+
+If producing a schema from scratch, it is recommended that the default
+resultset and column names are used, as per the default configuration.
 
 =cut
 
