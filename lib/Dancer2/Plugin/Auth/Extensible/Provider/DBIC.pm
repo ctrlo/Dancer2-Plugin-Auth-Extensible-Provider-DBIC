@@ -193,7 +193,9 @@ user hash is being passed around (without requiring access to the user_has_role
 keyword in other modules).
 
 =item users_resultset
+
 =item roles_resultset
+
 =item user_roles_resultset
 
 These configuration values are provided for fine-grain tuning of your DBIC resultset
