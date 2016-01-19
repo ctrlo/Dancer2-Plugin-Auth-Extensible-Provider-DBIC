@@ -66,11 +66,13 @@ A full example showing all options:
                 users:
                     provider: 'DBIC'
 
-                    # optionally specify names of tables if they're not the defaults
-                    # (defaults are 'users', 'roles' and 'user_roles')
-                    users_table: 'users'
-                    roles_table: 'roles'
-                    user_roles_table: 'user_roles'
+                    # Optionally specify the sources of the data if not the defaults (as shown).
+                    # See notes below for how these generate the resultset names etc.
+                    # If you use standard DBIC resultset and relationship names, then these
+                    # and the column names are the only settings you might need.
+                    users_source: 'user'
+                    roles_source: 'role'
+                    user_roles_source: 'user_role'
 
                     # optionally set the column names
                     users_username_column: username
@@ -108,22 +110,43 @@ A full example showing all options:
                     # Optionally specify the algorithm when encrypting new passwords
                     encryption_algorithm: SHA-512
 
+                    # If you don't use standard DBIC resultset and relationship names,
+                    # you might need to configure these instead:
+                    users_resultset: User
+                    user_relationship: user
+                    roles_resultset: Role
+                    role_relationship: role
+                    user_roles_resultset: UserRole
+                    user_user_roles_relationship: user_roles
+                    role_user_roles_relationship: user_roles # Currently unused
+
+                    # Deprecated settings. The following settings were renamed for clarity
+                    # to the *_source settings, although they can still be used. There is
+                    # no plan to remove them.
+                    users_table:
+                    roles_table:
+                    user_roles_table:
+
+
 =over
 
-=item users_table
+=item user_source
 
-Specifies the database table that the users are stored in. This will be camelized.
+Specifies the source name that contains the users. This will be camelized to generate
+the resultset name, and used as-is for the relationship name of user on the user_roles
+resultset.
 
-=item roles_table
+=item role_source
 
-Specifies the database table that the roles are stored in. This will be camelized.
+Specifies the source name that contains the roles. This will be camelized to generate
+the resultset name, and used as-is for the relationship name of role on the user_roles
+resultset.
 
-=item user_roles_table
+=item user_roles_source
 
-Specifies the database table that holds the many-to-many relationship information
-between users and roles. It is assumed that the relationship is configured in
-the DBIC schema, such that a user has many entries in the user_roles table, and
-that each of those has one role. This table name will be pluralized.
+Specifies the source name that contains the user_roles joining table. This will be
+camelized to generate the resultset name, and pluralized to generate the relationship
+name of user_roles on user and role.
 
 =item users_username_column
 
@@ -173,6 +196,19 @@ keyword. Instead it is intended to make it easier to access a user's roles if th
 user hash is being passed around (without requiring access to the user_has_role
 keyword in other modules).
 
+=item users_resultset
+=item user_relationship
+=item roles_resultset
+=item role_relationship
+=item user_roles_resultset
+=item user_user_roles_relationship
+=item role_user_roles_relationship
+
+These configuration values are provided for fine-grain tuning of your DBIC resultset
+names and relationships. If you use standard DBIC naming practices, you will not
+need to configure these, and they will be generated internally automatically. The
+names should be self-explanatory, but if not, please let me know or look at the code!
+
 =back
 
 =head1 SUGGESTED SCHEMA
@@ -203,15 +239,22 @@ sub new {
                : $dsl->schema;
 
     # Set default values
-    $realm_settings->{users_table}              ||= 'users';
-    $realm_settings->{users_username_column}    ||= 'username';
-    $realm_settings->{users_lastlogin_column}   ||= 'lastlogin';
-    $realm_settings->{user_valid_conditions}    ||= {};
-    $realm_settings->{users_password_column}    ||= 'password';
-    $realm_settings->{roles_table}              ||= 'roles';
-    $realm_settings->{user_roles_table}         ||= 'user_roles';
-    $realm_settings->{roles_role_column}        ||= 'role';
-    $realm_settings->{users_pwresetcode_column} ||= 'pw_reset_code';
+    $realm_settings->{users_source}                 ||= ($realm_settings->{users_table} || 'user');
+    $realm_settings->{users_resultset}              ||= camelize($realm_settings->{users_source});
+    $realm_settings->{user_relationship}            ||= $realm_settings->{users_source};
+    $realm_settings->{users_username_column}        ||= 'username';
+    $realm_settings->{users_lastlogin_column}       ||= 'lastlogin';
+    $realm_settings->{user_valid_conditions}        ||= {};
+    $realm_settings->{users_password_column}        ||= 'password';
+    $realm_settings->{roles_source}                 ||= ($realm_settings->{roles_table} || 'role');
+    $realm_settings->{roles_resultset}              ||= camelize($realm_settings->{roles_source});
+    $realm_settings->{role_relationship}            ||= $realm_settings->{roles_source};
+    $realm_settings->{user_roles_source}            ||= ($realm_settings->{user_roles_table} || 'user_roles');
+    $realm_settings->{user_roles_resultset}         ||= camelize($realm_settings->{user_roles_source});
+    $realm_settings->{user_user_roles_relationship} ||= Lingua::EN::Inflect::Phrase::to_PL($realm_settings->{user_roles_source});
+    $realm_settings->{role_user_roles_relationship} = $realm_settings->{user_user_roles_relationship}; # Currently unused
+    $realm_settings->{roles_role_column}            ||= 'role';
+    $realm_settings->{users_pwresetcode_column}     ||= 'pw_reset_code';
 
     my $self = {
         realm_settings => $realm_settings,
@@ -225,7 +268,6 @@ sub new {
 sub _user_rset {
     my ($self, $column, $value, $options) = @_;
     my $settings              = $self->realm_settings;
-    my $users_table           = $settings->{users_table};
     my $username_column       = $settings->{users_username_column};
     my $user_valid_conditions = $settings->{user_valid_conditions};
 
@@ -240,7 +282,7 @@ sub _user_rset {
     my $search = { %$user_valid_conditions, $search_column => $value };
 
     # Look up the user
-    $self->_schema->resultset(camelize $users_table)->search($search, $options);
+    $self->_schema->resultset($settings->{users_resultset})->search($search, $options);
 }
 
 sub _dsl_local { shift->{dsl_local} };
@@ -339,11 +381,10 @@ sub get_user_by_code {
 sub create_user {
     my ($self, %user) = @_;
     my $settings        = $self->realm_settings;
-    my $users_table     = $settings->{users_table};
     my $username_column = $settings->{users_username_column};
     my $username        = delete $user{username} # Prevent attempt to update wrong key
         or die "Username needs to be specified for create_user";
-    $self->_schema->resultset(camelize $users_table)->create({
+    $self->_schema->resultset($settings->{users_resultset})->create({
         $username_column => $username
     });
     $self->set_user_details($username, %user);
@@ -366,34 +407,31 @@ sub set_user_details {
     if (my $roles_key = $self->realm_settings->{roles_key}) {
         if (my $new_roles = delete $update{$roles_key}) {
 
-            my $users_table           = $settings->{users_table};
-            my $roles_table           = $settings->{roles_table};
-            my $user_roles_table      = $settings->{user_roles_table};
             my $roles_role_column     = $settings->{roles_role_column};
             my $users_username_column = $settings->{users_username_column};
 
-            my @all_roles      = $self->_schema->resultset(camelize $roles_table)->all;
+            my @all_roles      = $self->_schema->resultset($settings->{roles_resultset})->all;
             my %existing_roles = map { $_ => 1 } @{$self->get_user_roles($username)};
 
             foreach my $role (@all_roles) {
                 my $role_name = $role->$roles_role_column;
                 if ($new_roles->{$role_name} && !$existing_roles{$role_name}) {
                     # Needs to be added
-                    $self->_schema->resultset(camelize $user_roles_table)->create({
-                        $users_table => {
+                    $self->_schema->resultset($settings->{user_roles_resultset})->create({
+                        $settings->{user_relationship} => {
                             $users_username_column => $username,
                             %{$settings->{user_valid_conditions}}
                         },
-                        $roles_table => { $roles_role_column => $role_name },
+                        $settings->{role_relationship} => { $roles_role_column => $role_name },
                     });
                 }
                 elsif (!$new_roles->{$role_name} && $existing_roles{$role_name}) {
                     # Needs to be removed
-                    $self->_schema->resultset(camelize $user_roles_table)->search({
-                        "$users_table.$users_username_column" => $username,
-                        "$roles_table.$roles_role_column"     => $role_name,
+                    $self->_schema->resultset($settings->{user_roles_resultset})->search({
+                        "$settings->{user_relationship}.$users_username_column" => $username,
+                        "$settings->{role_relationship}.$roles_role_column"     => $role_name,
                     },{
-                        join => [ $users_table, $roles_table ],
+                        join => [ $settings->{user_relationship}, $settings->{role_relationship} ],
                     })->delete;
                 }
             }
@@ -416,13 +454,12 @@ sub set_user_details {
 sub get_user_roles {
     my ($self, $username) = @_;
 
-    my $settings          = $self->realm_settings;
-    my $roles_table       = $settings->{roles_table};
-    my $user_roles_table  = $settings->{user_roles_table};
-    my $roles_role_column = $settings->{roles_role_column};
-    $user_roles_table     = Lingua::EN::Inflect::Phrase::to_PL($user_roles_table);
+    my $settings                     = $self->realm_settings;
+    my $role_relationship            = $settings->{role_relationship};
+    my $user_user_roles_relationship = $settings->{user_user_roles_relationship};
+    my $roles_role_column            = $settings->{roles_role_column};
 
-    my $options = { prefetch => { $user_roles_table => $roles_table } };
+    my $options = { prefetch => { $user_user_roles_relationship => $role_relationship } };
     my ($user) = $self->_user_rset(username => $username, $options)->all;
     if (!$user) {
         $self->_dsl_local->debug("No such user $username when looking for roles");
@@ -430,9 +467,9 @@ sub get_user_roles {
     }
 
     my @roles;
-    foreach my $ur ($user->$user_roles_table)
+    foreach my $ur ($user->$user_user_roles_relationship)
     {
-        my $role = $ur->$roles_table->$roles_role_column;
+        my $role = $ur->$role_relationship->$roles_role_column;
         push @roles, $role;
     }
 
