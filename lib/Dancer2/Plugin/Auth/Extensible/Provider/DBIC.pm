@@ -5,7 +5,7 @@ use base 'Dancer2::Plugin::Auth::Extensible::Provider::Base';
 use DBIx::Class::ResultClass::HashRefInflator;
 use String::CamelCase qw(camelize);
 
-our $VERSION = '0.401';
+our $VERSION = '0.500';
 
 =head1 NAME 
 
