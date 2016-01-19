@@ -3,7 +3,6 @@ package Dancer2::Plugin::Auth::Extensible::Provider::DBIC;
 use strict;
 use base 'Dancer2::Plugin::Auth::Extensible::Provider::Base';
 use DBIx::Class::ResultClass::HashRefInflator;
-use Lingua::EN::Inflect::Phrase;
 use String::CamelCase qw(camelize);
 
 our $VERSION = '0.401';
