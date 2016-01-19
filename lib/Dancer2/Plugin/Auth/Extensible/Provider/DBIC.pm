@@ -66,10 +66,13 @@ A full example showing all options:
                 users:
                     provider: 'DBIC'
 
-                    # Optionally specify the sources of the data if not the defaults (as shown).
-                    # See notes below for how these generate the resultset names etc.
-                    # If you use standard DBIC resultset and relationship names, then these
-                    # and the column names are the only settings you might need.
+                    # Optionally specify the sources of the data if not the
+                    # defaults (as shown).  See notes below for how these
+                    # generate the resultset names.  If you use standard DBIC
+                    # resultset names, then these and the column names are the
+                    # only settings you might need.  The relationships between
+                    # these resultsets is automatically introspected by
+                    # inspection of the schema.
                     users_source: 'user'
                     roles_source: 'role'
                     user_roles_source: 'user_role'
@@ -110,8 +113,8 @@ A full example showing all options:
                     # Optionally specify the algorithm when encrypting new passwords
                     encryption_algorithm: SHA-512
 
-                    # If you don't use standard DBIC resultset and relationship names,
-                    # you might need to configure these instead:
+                    # If you don't use standard DBIC resultset names, you might
+                    # need to configure these instead:
                     users_resultset: User
                     roles_resultset: Role
                     user_roles_resultset: UserRole
@@ -129,20 +132,20 @@ A full example showing all options:
 =item user_source
 
 Specifies the source name that contains the users. This will be camelized to generate
-the resultset name, and used as-is for the relationship name of user on the user_roles
-resultset.
+the resultset name. The relationship to user_roles_source will be introspected from
+the schema.
 
 =item role_source
 
 Specifies the source name that contains the roles. This will be camelized to generate
-the resultset name, and used as-is for the relationship name of role on the user_roles
-resultset.
+the resultset name. The relationship to user_roles_source will be introspected from
+the schema.
 
 =item user_roles_source
 
 Specifies the source name that contains the user_roles joining table. This will be
-camelized to generate the resultset name, and pluralized to generate the relationship
-name of user_roles on user and role.
+camelized to generate the resultset name. The relationship to the user and role
+source will be introspected from the schema.
 
 =item users_username_column
 
@@ -198,10 +201,9 @@ keyword in other modules).
 
 =item user_roles_resultset
 
-These configuration values are provided for fine-grain tuning of your DBIC resultset
-names and relationships. If you use standard DBIC naming practices, you will not
-need to configure these, and they will be generated internally automatically. The
-names should be self-explanatory, but if not, please let me know or look at the code!
+These configuration values are provided for fine-grain tuning of your DBIC
+resultset names. If you use standard DBIC naming practices, you will not need
+to configure these, and they will be generated internally automatically.
 
 =back
 
