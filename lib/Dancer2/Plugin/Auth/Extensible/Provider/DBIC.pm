@@ -113,12 +113,8 @@ A full example showing all options:
                     # If you don't use standard DBIC resultset and relationship names,
                     # you might need to configure these instead:
                     users_resultset: User
-                    user_relationship: user
                     roles_resultset: Role
-                    role_relationship: role
                     user_roles_resultset: UserRole
-                    user_user_roles_relationship: user_roles
-                    role_user_roles_relationship: user_roles # Currently unused
 
                     # Deprecated settings. The following settings were renamed for clarity
                     # to the *_source settings, although they can still be used. There is
@@ -197,12 +193,10 @@ user hash is being passed around (without requiring access to the user_has_role
 keyword in other modules).
 
 =item users_resultset
-=item user_relationship
+
 =item roles_resultset
-=item role_relationship
+
 =item user_roles_resultset
-=item user_user_roles_relationship
-=item role_user_roles_relationship
 
 These configuration values are provided for fine-grain tuning of your DBIC resultset
 names and relationships. If you use standard DBIC naming practices, you will not
@@ -241,20 +235,44 @@ sub new {
     # Set default values
     $realm_settings->{users_source}                 ||= ($realm_settings->{users_table} || 'user');
     $realm_settings->{users_resultset}              ||= camelize($realm_settings->{users_source});
-    $realm_settings->{user_relationship}            ||= $realm_settings->{users_source};
     $realm_settings->{users_username_column}        ||= 'username';
     $realm_settings->{users_lastlogin_column}       ||= 'lastlogin';
     $realm_settings->{user_valid_conditions}        ||= {};
     $realm_settings->{users_password_column}        ||= 'password';
     $realm_settings->{roles_source}                 ||= ($realm_settings->{roles_table} || 'role');
     $realm_settings->{roles_resultset}              ||= camelize($realm_settings->{roles_source});
-    $realm_settings->{role_relationship}            ||= $realm_settings->{roles_source};
     $realm_settings->{user_roles_source}            ||= ($realm_settings->{user_roles_table} || 'user_roles');
     $realm_settings->{user_roles_resultset}         ||= camelize($realm_settings->{user_roles_source});
-    $realm_settings->{user_user_roles_relationship} ||= Lingua::EN::Inflect::Phrase::to_PL($realm_settings->{user_roles_source});
-    $realm_settings->{role_user_roles_relationship} = $realm_settings->{user_user_roles_relationship}; # Currently unused
     $realm_settings->{roles_role_column}            ||= 'role';
     $realm_settings->{users_pwresetcode_column}     ||= 'pw_reset_code';
+
+    # introspect result sources to find relationships
+
+    my $user_roles_class =
+      $schema->resultset( $realm_settings->{user_roles_resultset} )
+      ->result_source->result_class;
+
+    foreach my $name (qw/user role/) {
+
+        my $result_source =
+          $schema->resultset( $realm_settings->{"${name}s_resultset"} )
+          ->result_source;
+
+        foreach my $relname ( $result_source->relationships ) {
+            my $info = $result_source->relationship_info($relname);
+            my %cond = %{ $info->{cond} };
+            if (   $info->{class} eq $user_roles_class
+                && $info->{attrs}->{accessor} eq 'multi'
+                && $info->{attrs}->{join_type} eq 'LEFT'
+                && scalar keys %cond == 1 )
+            {
+                $realm_settings->{"${name}_user_roles_relationship"} = $relname;
+                ( $realm_settings->{"${name}_relationship"} ) =
+                  keys %{ $result_source->reverse_relationship_info($relname) };
+                last;
+            }
+        }
+    }
 
     my $self = {
         realm_settings => $realm_settings,

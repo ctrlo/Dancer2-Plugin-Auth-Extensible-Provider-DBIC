@@ -26,6 +26,7 @@ WriteMakefile(
             repository => 'https://github.com/ctrlo/Dancer2-Plugin-Auth-Extensible-Provider-DBIC',
             bugtracker => 'https://github.com/ctrlo/Dancer2-Plugin-Auth-Extensible-Provider-DBIC/issues',
             homepage   => 'https://github.com/ctrlo/Dancer2-Plugin-Auth-Extensible-Provider-DBIC/',
+            IRC        => 'irc://irc.perl.org/#dancer',
         },
     },
 
