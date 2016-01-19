@@ -3,11 +3,11 @@ plugins:
     schema1:
       dsn: 'dbi:SQLite:dbname=:memory:'
       on_connect_do: ['PRAGMA foreign_keys = ON']
-      schema_class: t::lib::Schema
+      schema_class: t::lib::Schema1
     schema2:
       dsn: 'dbi:SQLite:dbname=:memory:'
       on_connect_do: ['PRAGMA foreign_keys = ON']
-      schema_class: t::lib::Schema
+      schema_class: t::lib::Schema2
   Auth::Extensible:
     realms:
       config1:
@@ -15,6 +15,7 @@ plugins:
         schema_name: schema1
         users_table: user
         roles_table: role
+        roles_key: role
         user_roles_table: user_role
         record_lastlogin: 1
         users_pwchanged_column: pw_changed
@@ -25,7 +26,11 @@ plugins:
       config2:
         provider: DBIC
         schema_name: schema2
-        users_table: user
-        roles_table: role
-        user_roles_table: user_role
+        users_table: myuser
+        roles_table: myrole
+        roles_key: role
+        user_roles_table: myuser_role
+        users_username_column: myusername
+        users_password_column: mypassword
+        roles_role_column: rolename
         record_lastlogin: 0
