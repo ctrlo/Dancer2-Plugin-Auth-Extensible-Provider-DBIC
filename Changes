@@ -1,5 +1,8 @@
 Revision history for Dancer2-Plugin-Auth-Extensible-Provider-DBIC
 
+0.501 Wed Jan 20 12:00:00 2015 GMT
+    * Fix build deps (Peter Mottram)
+
 0.500 Tue Jan 19 16:00:00 2015 GMT
     * Add default password reset code column
     * Add tests (Peter Mottram)

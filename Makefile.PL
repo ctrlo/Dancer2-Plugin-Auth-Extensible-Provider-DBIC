@@ -18,7 +18,7 @@ WriteMakefile(
     },
     PREREQ_PM => {
         'Dancer2::Plugin::DBIC' => 0,
-        'Dancer2::Plugin::Auth::Extensible' => 0.500,
+        'Dancer2::Plugin::Auth::Extensible' => 0.501,
         'DBIx::Class::ResultClass::HashRefInflator' => 0,
         'String::CamelCase' => 0,
     },
