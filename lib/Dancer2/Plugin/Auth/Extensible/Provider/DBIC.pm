@@ -249,30 +249,34 @@ sub new {
     $realm_settings->{roles_role_column}            ||= 'role';
     $realm_settings->{users_pwresetcode_column}     ||= 'pw_reset_code';
 
-    # introspect result sources to find relationships
+    # Hacky config check, but no other way to get config without DPAE update
+    unless ($dsl->config->{plugins}->{'Auth::Extensible'}->{disable_roles}) {
 
-    my $user_roles_class =
-      $schema->resultset( $realm_settings->{user_roles_resultset} )
-      ->result_source->result_class;
+        # Introspect result sources to find relationships.
+        # Unless roles are disabled.
+        my $user_roles_class =
+          $schema->resultset( $realm_settings->{user_roles_resultset} )
+          ->result_source->result_class;
 
-    foreach my $name (qw/user role/) {
+        foreach my $name (qw/user role/) {
 
-        my $result_source =
-          $schema->resultset( $realm_settings->{"${name}s_resultset"} )
-          ->result_source;
+            my $result_source =
+              $schema->resultset( $realm_settings->{"${name}s_resultset"} )
+              ->result_source;
 
-        foreach my $relname ( $result_source->relationships ) {
-            my $info = $result_source->relationship_info($relname);
-            my %cond = %{ $info->{cond} };
-            if (   $info->{class} eq $user_roles_class
-                && $info->{attrs}->{accessor} eq 'multi'
-                && $info->{attrs}->{join_type} eq 'LEFT'
-                && scalar keys %cond == 1 )
-            {
-                $realm_settings->{"${name}_user_roles_relationship"} = $relname;
-                ( $realm_settings->{"${name}_relationship"} ) =
-                  keys %{ $result_source->reverse_relationship_info($relname) };
-                last;
+            foreach my $relname ( $result_source->relationships ) {
+                my $info = $result_source->relationship_info($relname);
+                my %cond = %{ $info->{cond} };
+                if (   $info->{class} eq $user_roles_class
+                    && $info->{attrs}->{accessor} eq 'multi'
+                    && $info->{attrs}->{join_type} eq 'LEFT'
+                    && scalar keys %cond == 1 )
+                {
+                    $realm_settings->{"${name}_user_roles_relationship"} = $relname;
+                    ( $realm_settings->{"${name}_relationship"} ) =
+                      keys %{ $result_source->reverse_relationship_info($relname) };
+                    last;
+                }
             }
         }
     }
