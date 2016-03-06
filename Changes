@@ -1,6 +1,9 @@
 Revision history for Dancer2-Plugin-Auth-Extensible-Provider-DBIC
 
-0.501 Wed Jan 20 12:00:00 2015 GMT
+0.502 Sun Mar 6 17:00:00 2016 GMT
+    * Allow disable_roles to be used
+
+0.501 Wed Jan 20 12:00:00 2016 GMT
     * Fix build deps (Peter Mottram)
 
 0.500 Tue Jan 19 16:00:00 2015 GMT
