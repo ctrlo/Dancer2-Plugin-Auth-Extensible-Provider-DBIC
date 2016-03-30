@@ -1,9 +1,14 @@
 package Dancer2::Plugin::Auth::Extensible::Provider::DBIC;
 
-use strict;
-use base 'Dancer2::Plugin::Auth::Extensible::Provider::Base';
+use Carp;
+use Dancer2::Core::Types qw/Int Str/;
+use DateTime;
 use DBIx::Class::ResultClass::HashRefInflator;
 use String::CamelCase qw(camelize);
+
+use Moo;
+with "Dancer2::Plugin::Auth::Extensible::Role::Provider";
+use namespace::clean;
 
 our $VERSION = '0.502';
 
@@ -119,14 +124,50 @@ A full example showing all options:
                     user_roles_resultset: UserRole
 
                     # Deprecated settings. The following settings were renamed for clarity
-                    # to the *_source settings, although they can still be used. There is
-                    # no plan to remove them.
+                    # to the *_source settings
                     users_table:
                     roles_table:
                     user_roles_table:
 
 
 =over
+
+=cut
+
+sub deprecated_setting {
+    my ( $setting, $replacement ) = @_;
+    carp __PACKAGE__, " config setting \"$setting\" is deprecated.",
+      " Use \"$replacement\" instead.";
+}
+
+sub BUILDARGS {
+    my $class = shift;
+    my %args = ref( $_[0] ) eq 'HASH' ? %{ $_[0] } : @_;
+
+    my $app = $args{plugin}->app;
+
+    # backwards compat
+
+    if ( $args{users_table} ) {
+        deprecated_setting( 'users_table', 'users_source' );
+        $args{users_source} = delete $args{users_table}
+          if !$args{users_source};
+    }
+
+    if ( $args{roles_table} ) {
+        deprecated_setting( 'roles_table', 'roles_source' );
+        $args{roles_source} = delete $args{roles_table}
+          if !$args{roles_source};
+    }
+
+    if ( $args{user_roles_table} ) {
+        deprecated_setting( 'user_roles_table', 'user_roles_source' );
+        $args{user_roles_source} = delete $args{user_roles_table}
+          if !$args{user_roles_source};
+    }
+
+    return \%args;
+}
 
 =item user_source
 
@@ -215,91 +256,205 @@ resultset and column names are used, as per the default configuration.
 
 =cut
 
-# Override ::Base->new, as we need to store DB schema
-sub new {
-    my ($class, $realm_settings, $dsl) = @_;
+has dancer2_plugin_dbic => (
+    is      => 'ro',
+    lazy    => 1,
+    default => sub { $_[0]->plugin->app->with_plugin('Dancer2::Plugin::DBIC') },
+    handles => { dbic_schema => 'schema' },
+    init_arg => undef,
+);
 
-    if ( $dsl->app->can('with_plugin') ) {
-        # plugin2
-        $dsl->app->with_plugin('Dancer2::Plugin::DBIC')
-          or die "Failed to load Dancer2::Plugin::DBIC";
-    }
-    else {
-        # old bad world
-        die "No schema method in app. Did you load Dancer2::Plugin::DBIC before Dancer2::Plugin::Auth::Extensible?"
-          unless $dsl->can('schema');
-    }
+has schema_name => ( is => 'ro', );
 
-    # Grab a handle to the Plugin::DBIC schema
-    my $schema = $realm_settings->{schema_name}
-               ? $dsl->schema($realm_settings->{schema_name})
-               : $dsl->schema;
+has schema => (
+    is      => 'ro',
+    lazy    => 1,
+    default => sub {
+        my $self = shift;
+        $self->schema_name
+          ? $self->dbic_schema( $self->schema_name )
+          : $self->dbic_schema;
+    },
+);
 
-    # Set default values
-    $realm_settings->{users_source}                 ||= ($realm_settings->{users_table} || 'user');
-    $realm_settings->{users_resultset}              ||= camelize($realm_settings->{users_source});
-    $realm_settings->{users_username_column}        ||= 'username';
-    $realm_settings->{users_lastlogin_column}       ||= 'lastlogin';
-    $realm_settings->{user_valid_conditions}        ||= {};
-    $realm_settings->{users_password_column}        ||= 'password';
-    $realm_settings->{roles_source}                 ||= ($realm_settings->{roles_table} || 'role');
-    $realm_settings->{roles_resultset}              ||= camelize($realm_settings->{roles_source});
-    $realm_settings->{user_roles_source}            ||= ($realm_settings->{user_roles_table} || 'user_roles');
-    $realm_settings->{user_roles_resultset}         ||= camelize($realm_settings->{user_roles_source});
-    $realm_settings->{roles_role_column}            ||= 'role';
-    $realm_settings->{users_pwresetcode_column}     ||= 'pw_reset_code';
+has password_expiry_days => (
+    is => 'ro',
+    isa => Int,
+);
 
-    # Hacky config check, but no other way to get config without DPAE update
-    unless ($dsl->config->{plugins}->{'Auth::Extensible'}->{disable_roles}) {
+has roles_key => (
+    is => 'ro',
+);
 
-        # Introspect result sources to find relationships.
-        # Unless roles are disabled.
-        my $user_roles_class =
-          $schema->resultset( $realm_settings->{user_roles_resultset} )
+has roles_resultset => (
+    is      => 'ro',
+    lazy    => 1,
+    default => sub { camelize( $_[0]->roles_source ) },
+);
+
+has roles_role_column => (
+    is      => 'ro',
+    default => 'role',
+);
+
+has roles_source => (
+    is      => 'ro',
+    default => 'role',
+);
+
+has users_resultset => (
+    is      => 'ro',
+    lazy    => 1,
+    default => sub { camelize( $_[0]->users_source ) },
+);
+
+has users_source => (
+    is      => 'ro',
+    default => 'user',
+);
+
+has users_lastlogin_column => (
+    is      => 'ro',
+    default => 'lastlogin',
+);
+
+has users_password_column => (
+    is      => 'ro',
+    default => 'password',
+);
+
+has users_pwchanged_column => (
+    is => 'ro',
+);
+
+has users_pwresetcode_column => (
+    is      => 'ro',
+    default => 'pw_reset_code',
+);
+
+has users_username_column => (
+    is      => 'ro',
+    default => 'username',
+);
+
+has user_user_roles_relationship => (
+    is      => 'ro',
+    lazy    => 1,
+    default => sub { $_[0]->_build_user_roles_relationship('user') },
+);
+
+has user_roles_resultset => (
+    is      => 'ro',
+    lazy    => 1,
+    default => sub { camelize( $_[0]->user_roles_source ) },
+);
+
+has user_roles_source => (
+    is      => 'ro',
+    default => 'user_roles',
+);
+
+has user_valid_conditions => (
+    is      => 'ro',
+    default => sub { {} },
+);
+
+has role_user_roles_relationship => (
+    is      => 'ro',
+    lazy    => 1,
+    default => sub { $_[0]->_build_user_roles_relationship('role') },
+);
+
+has user_roles_result_class => (
+    is      => 'ro',
+    lazy    => 1,
+    default => sub {
+        my $self = shift;
+        # undef if roles are disabled
+        return undef if $self->plugin->disable_roles;
+        return $self->schema->resultset( $self->user_roles_resultset )
           ->result_source->result_class;
+    },
+);
 
-        foreach my $name (qw/user role/) {
+sub _build_user_roles_relationship {
+    my ( $self, $name ) = @_;
 
-            my $result_source =
-              $schema->resultset( $realm_settings->{"${name}s_resultset"} )
-              ->result_source;
+    return undef if $self->plugin->disable_roles;
 
-            foreach my $relname ( $result_source->relationships ) {
-                my $info = $result_source->relationship_info($relname);
-                my %cond = %{ $info->{cond} };
-                if (   $info->{class} eq $user_roles_class
-                    && $info->{attrs}->{accessor} eq 'multi'
-                    && $info->{attrs}->{join_type} eq 'LEFT'
-                    && scalar keys %cond == 1 )
-                {
-                    $realm_settings->{"${name}_user_roles_relationship"} = $relname;
-                    ( $realm_settings->{"${name}_relationship"} ) =
-                      keys %{ $result_source->reverse_relationship_info($relname) };
-                    last;
-                }
-            }
+    # Introspect result sources to find relationships
+
+    my $user_roles_class =
+      $self->schema->resultset( $self->user_roles_resultset )
+      ->result_source->result_class;
+
+    my $resultset_name = "${name}s_resultset";
+
+    my $result_source =
+      $self->schema->resultset( $self->$resultset_name )->result_source;
+
+    foreach my $relname ( $result_source->relationships ) {
+        my $info = $result_source->relationship_info($relname);
+        my %cond = %{ $info->{cond} };
+        if (   $info->{class} eq $user_roles_class
+            && $info->{attrs}->{accessor} eq 'multi'
+            && $info->{attrs}->{join_type} eq 'LEFT'
+            && scalar keys %cond == 1 )
+        {
+            return $relname;
         }
     }
+}
 
-    my $self = {
-        realm_settings => $realm_settings,
-        dsl_local      => $dsl,
-        schema         => $schema,
+has role_relationship => (
+    is      => 'ro',
+    lazy    => 1,
+    default => sub { $_[0]->_build_relationship('role') },
+);
+
+has user_relationship => (
+    is      => 'ro',
+    lazy    => 1,
+    default => sub { $_[0]->_build_relationship('user') },
+);
+
+sub _build_relationship {
+    my ( $self, $name ) = @_;
+
+    return undef if $self->plugin->disable_roles;
+
+    # Introspect result sources to find relationships
+
+    my $user_roles_class =
+      $self->schema->resultset( $self->user_roles_resultset )
+      ->result_source->result_class;
+
+    my $resultset_name = "${name}s_resultset";
+
+    my $result_source =
+      $self->schema->resultset( $self->$resultset_name )->result_source;
+
+    my $user_roles_relationship = "${name}_user_roles_relationship";
+
+    my ($relationship) = keys %{
+        $result_source->reverse_relationship_info(
+            $self->$user_roles_relationship
+        )
     };
-    return bless $self => $class;
+
+    return $relationship;
 }
 
 # Returns a DBIC rset for the user
 sub _user_rset {
     my ($self, $column, $value, $options) = @_;
-    my $settings              = $self->realm_settings;
-    my $username_column       = $settings->{users_username_column};
-    my $user_valid_conditions = $settings->{user_valid_conditions};
+    my $username_column       = $self->users_username_column;
+    my $user_valid_conditions = $self->user_valid_conditions;
 
     my $search_column = $column eq 'username'
                       ? $username_column
                       : $column eq 'pw_reset_code'
-                      ? $settings->{users_pwresetcode_column}
+                      ? $self->users_pwresetcode_column
                       : $column;
 
     # Search based on standard username search, plus any additional
@@ -307,15 +462,7 @@ sub _user_rset {
     my $search = { %$user_valid_conditions, $search_column => $value };
 
     # Look up the user
-    $self->_schema->resultset($settings->{users_resultset})->search($search, $options);
-}
-
-sub _dsl_local { shift->{dsl_local} };
-
-sub _schema {
-    # Make sure we have an existing DBIC schema. Should have been
-    # created on plugin load
-    shift->{schema} or die "No DBIC schema available";
+    $self->schema->resultset($self->users_resultset)->search($search, $options);
 }
 
 sub authenticate_user {
@@ -327,36 +474,36 @@ sub authenticate_user {
 
     # OK, we found a user, let match_password (from our base class) take care of
     # working out if the password is correct
-    my $settings        = $self->realm_settings;
-    my $password_column = $settings->{users_password_column};
-    if (my $match = $self->match_password($password, $user->{$password_column})) {
-        if ($options{lastlogin}) {
-            if (my $lastlogin = $user->{lastlogin}) {
-                my $db_parser = $self->_schema->storage->datetime_parser;
-                $lastlogin    = $db_parser->parse_datetime($lastlogin);
-                $self->_dsl_local->app->session->write($options{lastlogin} => $lastlogin);
+    my $password_column = $self->users_password_column;
+    if ( my $match =
+        $self->match_password( $password, $user->{$password_column} ) )
+    {
+        if ( $options{lastlogin} ) {
+            if ( my $lastlogin = $user->{lastlogin} ) {
+                my $db_parser = $self->schema->storage->datetime_parser;
+                $lastlogin = $db_parser->parse_datetime($lastlogin);
+
+                # SysPete: comment out next line since this is not used
+                # anywhere and is undocumented
+                #$self->plugin->app->session->write($options{lastlogin} => $lastlogin);
             }
-            $self->set_user_details(
-                $username,
-                $self->realm_settings->{users_lastlogin_column} => DateTime->now,
-            );
+            $self->set_user_details( $username,
+                $self->users_lastlogin_column => DateTime->now, );
         }
         return $match;
     }
-    return; # Make sure we return nothing
+    return;    # Make sure we return nothing
 }
 
 sub set_user_password {
-    my ($self, $username, $password) = @_;
-    my $settings        = $self->realm_settings;
-    my $algorithm       = $settings->{encryption_algorithm};
-    my $encrypted       = $self->encrypt_password($password, $algorithm);
-    my $password_column = $settings->{users_password_column};
-    my %update          = ($password_column => $encrypted);
-    if (my $pwchanged = $settings->{users_pwchanged_column}) {
+    my ( $self, $username, $password ) = @_;
+    my $encrypted       = $self->encrypt_password($password);
+    my $password_column = $self->users_password_column;
+    my %update          = ( $password_column => $encrypted );
+    if ( my $pwchanged = $self->users_pwchanged_column ) {
         $update{$pwchanged} = DateTime->now;
     }
-    $self->set_user_details($username, %update);
+    $self->set_user_details( $username, %update );
 }
 
 # Return details about the user.  The user's row in the users table will be
@@ -373,17 +520,16 @@ sub get_user_details {
     my ($user) = $users_rs->all;
     
     if (!$user) {
-        $self->_dsl_local->debug("No such user $username");
+        $self->plugin->app->log( 'debug', "No such user $username" );
         return;
     } else {
-        my $settings = $self->realm_settings;
-        if (my $pwchanged = $settings->{users_pwchanged_column}) {
+        if (my $pwchanged = $self->users_pwchanged_column) {
             # Convert to DateTime object
-            my $db_parser = $self->_schema->storage->datetime_parser;
+            my $db_parser = $self->schema->storage->datetime_parser;
             $user->{$pwchanged} = $db_parser->parse_datetime($user->{$pwchanged})
                 if $user->{$pwchanged};
         }
-        if (my $roles_key = $settings->{roles_key}) {
+        if (my $roles_key = $self->roles_key) {
             my @roles = @{$self->get_user_roles($username)};
             my %roles = map { $_ => 1 } @roles;
             $user->{$roles_key} = \%roles;
@@ -396,7 +542,7 @@ sub get_user_details {
 sub get_user_by_code {
     my ($self, $code) = @_;
 
-    my $username_column = $self->realm_settings->{users_username_column};
+    my $username_column = $self->users_username_column;
     my $users_rs        = $self->_user_rset(pw_reset_code => $code);
     my ($user)          = $users_rs->all;
     return unless $user;
@@ -405,11 +551,10 @@ sub get_user_by_code {
 
 sub create_user {
     my ($self, %user) = @_;
-    my $settings        = $self->realm_settings;
-    my $username_column = $settings->{users_username_column};
+    my $username_column = $self->users_username_column;
     my $username        = delete $user{username} # Prevent attempt to update wrong key
         or die "Username needs to be specified for create_user";
-    $self->_schema->resultset($settings->{users_resultset})->create({
+    $self->schema->resultset($self->users_resultset)->create({
         $username_column => $username
     });
     $self->set_user_details($username, %user);
@@ -422,49 +567,65 @@ sub set_user_details {
     die "Username to update needs to be specified"
         unless $username;
 
-    my $settings = $self->realm_settings;
-
     # Look up the user
     my ($user) = $self->_user_rset(username => $username)->all;
     $user or return;
 
     # Are we expecting a user_roles key?
-    if (my $roles_key = $self->realm_settings->{roles_key}) {
+    if (my $roles_key = $self->roles_key) {
         if (my $new_roles = delete $update{$roles_key}) {
 
-            my $roles_role_column     = $settings->{roles_role_column};
-            my $users_username_column = $settings->{users_username_column};
+            my $roles_role_column     = $self->roles_role_column;
+            my $users_username_column = $self->users_username_column;
 
-            my @all_roles      = $self->_schema->resultset($settings->{roles_resultset})->all;
+            my @all_roles      = $self->schema->resultset($self->roles_resultset)->all;
             my %existing_roles = map { $_ => 1 } @{$self->get_user_roles($username)};
 
             foreach my $role (@all_roles) {
                 my $role_name = $role->$roles_role_column;
-                if ($new_roles->{$role_name} && !$existing_roles{$role_name}) {
+
+                if ( $new_roles->{$role_name} && !$existing_roles{$role_name} )
+                {
                     # Needs to be added
-                    $self->_schema->resultset($settings->{user_roles_resultset})->create({
-                        $settings->{user_relationship} => {
-                            $users_username_column => $username,
-                            %{$settings->{user_valid_conditions}}
-                        },
-                        $settings->{role_relationship} => { $roles_role_column => $role_name },
-                    });
+                    $self->schema->resultset( $self->user_roles_resultset )
+                      ->create(
+                        {
+                            $self->user_relationship => {
+                                $users_username_column => $username,
+                                %{ $self->user_valid_conditions }
+                            },
+                            $self->role_relationship => {
+                                $roles_role_column => $role_name
+                            },
+                        }
+                      );
                 }
-                elsif (!$new_roles->{$role_name} && $existing_roles{$role_name}) {
+                elsif ( !$new_roles->{$role_name}
+                    && $existing_roles{$role_name} )
+                {
                     # Needs to be removed
-                    $self->_schema->resultset($settings->{user_roles_resultset})->search({
-                        "$settings->{user_relationship}.$users_username_column" => $username,
-                        "$settings->{role_relationship}.$roles_role_column"     => $role_name,
-                    },{
-                        join => [ $settings->{user_relationship}, $settings->{role_relationship} ],
-                    })->delete;
+                    $self->schema->resultset( $self->user_roles_resultset )
+                      ->search(
+                        {
+                            $self->user_relationship
+                              . ".$users_username_column" => $username,
+                            $self->role_relationship
+                              . ".$roles_role_column" => $role_name,
+                        },
+                        {
+                            join => [
+                                $self->user_relationship,
+                                $self->role_relationship
+                            ],
+                        }
+                      )->delete;
                 }
             }
         }
     }
 
     # Move password reset code between keys if required
-    if (my $users_pwresetcode_column = $settings->{users_pwresetcode_column}) {
+    if (my $users_pwresetcode_column = $self->users_pwresetcode_column) {
         if (exists $update{pw_reset_code}) {
             my $pw_reset_code = delete $update{pw_reset_code};
             $update{$users_pwresetcode_column} = $pw_reset_code;
@@ -479,15 +640,18 @@ sub set_user_details {
 sub get_user_roles {
     my ($self, $username) = @_;
 
-    my $settings                     = $self->realm_settings;
-    my $role_relationship            = $settings->{role_relationship};
-    my $user_user_roles_relationship = $settings->{user_user_roles_relationship};
-    my $roles_role_column            = $settings->{roles_role_column};
+    my $role_relationship            = $self->role_relationship;
+    my $user_user_roles_relationship = $self->user_user_roles_relationship;
+    my $roles_role_column            = $self->roles_role_column;
 
-    my $options = { prefetch => { $user_user_roles_relationship => $role_relationship } };
+    my $options =
+      { prefetch => { $user_user_roles_relationship => $role_relationship } };
+
     my ($user) = $self->_user_rset(username => $username, $options)->all;
+
     if (!$user) {
-        $self->_dsl_local->debug("No such user $username when looking for roles");
+        $self->plugin->app->log( 'debug',
+            "No such user $username when looking for roles" );
         return;
     }
 
@@ -503,10 +667,9 @@ sub get_user_roles {
 
 sub password_expired {
     my ($self, $user) = @_;
-    my $settings = $self->realm_settings;
-    my $expiry   = $settings->{password_expiry_days}
-        or return 0; # No expiry set
-    if (my $pwchanged = $settings->{users_pwchanged_column}) {
+    my $expiry   = $self->password_expiry_days or return 0; # No expiry set
+
+    if (my $pwchanged = $self->users_pwchanged_column) {
         my $last_changed = $user->{$pwchanged}
             or return 1; # If not changed then report expired
         my $duration     = $last_changed->delta_days(DateTime->now);
