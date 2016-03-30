@@ -17,10 +17,12 @@ WriteMakefile(
         'DateTime::Format::SQLite' => 0,
     },
     PREREQ_PM => {
-        'Dancer2::Plugin::DBIC' => 0,
+        'Dancer2::Plugin::DBIC' => '0.0012',
         'Dancer2::Plugin::Auth::Extensible' => 0.501,
         'DBIx::Class::ResultClass::HashRefInflator' => 0,
         'String::CamelCase' => 0,
+        'Moo' => 0,
+        'namespace::clean' => 0,
     },
     dist                => { COMPRESS => 'gzip -9f', SUFFIX => 'gz', },
     clean               => { FILES => 'Dancer2-Plugin-Auth-Extensible-*' },
