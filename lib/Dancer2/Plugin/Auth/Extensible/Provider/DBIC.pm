@@ -482,10 +482,7 @@ sub authenticate_user {
             if ( my $lastlogin = $user->{lastlogin} ) {
                 my $db_parser = $self->schema->storage->datetime_parser;
                 $lastlogin = $db_parser->parse_datetime($lastlogin);
-
-                # SysPete: comment out next line since this is not used
-                # anywhere and is undocumented
-                #$self->plugin->app->session->write($options{lastlogin} => $lastlogin);
+                $self->plugin->app->session->write($options{lastlogin} => $lastlogin);
             }
             $self->set_user_details( $username,
                 $self->users_lastlogin_column => DateTime->now, );
