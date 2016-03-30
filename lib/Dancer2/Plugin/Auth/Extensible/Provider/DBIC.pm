@@ -553,7 +553,7 @@ sub create_user {
     my ($self, %user) = @_;
     my $username_column = $self->users_username_column;
     my $username        = delete $user{username} # Prevent attempt to update wrong key
-        or die "Username needs to be specified for create_user";
+        or croak "Username needs to be specified for create_user";
     $self->schema->resultset($self->users_resultset)->create({
         $username_column => $username
     });
@@ -564,7 +564,7 @@ sub create_user {
 sub set_user_details {
     my ($self, $username, %update) = @_;
 
-    die "Username to update needs to be specified"
+    croak "Username to update needs to be specified"
         unless $username;
 
     # Look up the user
@@ -675,7 +675,7 @@ sub password_expired {
         my $duration     = $last_changed->delta_days(DateTime->now);
         $duration->in_units('days') > $expiry ? 1 : 0;
     } else {
-        die "users_pwchanged_column not configured";
+        croak "users_pwchanged_column not configured";
     }
 }
 
