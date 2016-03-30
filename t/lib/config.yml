@@ -13,10 +13,10 @@ plugins:
       config1:
         provider: DBIC
         schema_name: schema1
-        users_table: user
-        roles_table: role
+        users_source: user
+        roles_source: role
         roles_key: role
-        user_roles_table: user_role
+        user_roles_source: user_role
         record_lastlogin: 1
         users_pwchanged_column: pw_changed
         password_expiry_days: 1
@@ -26,10 +26,10 @@ plugins:
       config2:
         provider: DBIC
         schema_name: schema2
-        users_table: myuser
-        roles_table: myrole
+        users_source: myuser
+        roles_source: myrole
         roles_key: role
-        user_roles_table: myuser_role
+        user_roles_source: myuser_role
         users_username_column: myusername
         users_password_column: mypassword
         roles_role_column: rolename
