@@ -1,188 +1,211 @@
-[1mNAME[0m
-    Dancer2::Plugin::Auth::Extensible::Provider::DBIC - authenticate via the
-    Dancer2::Plugin::DBIC plugin
+=head1 NAME 
 
-[1mDESCRIPTION[0m
-    This class is an authentication provider designed to authenticate users
-    against a database, using Dancer2::Plugin::DBIC to access a database.
+Dancer2::Plugin::Auth::Extensible::Provider::DBIC - authenticate via the
+L<Dancer2::Plugin::DBIC> plugin
 
-    See Dancer2::Plugin::DBIC for how to configure a database connection
-    appropriately; see the "CONFIGURATION" section below for how to configure
-    this authentication provider with database details.
 
-    See Dancer2::Plugin::Auth::Extensible for details on how to use the
-    authentication framework.
+=head1 DESCRIPTION
 
-[1mCONFIGURATION[0m
-    This provider tries to use sensible defaults, in the same manner as
-    Dancer2::Plugin::Auth::Extensible::Provider::Database, so you may not need
-    to provide much configuration if your database tables look similar to
-    those.
+This class is an authentication provider designed to authenticate users against
+a database, using L<Dancer2::Plugin::DBIC> to access a database.
 
-    The most basic configuration, assuming defaults for all options, and
-    defining a single authentication realm named 'users':
+See L<Dancer2::Plugin::DBIC> for how to configure a database connection
+appropriately; see the L</CONFIGURATION> section below for how to configure this
+authentication provider with database details.
 
-        plugins:
-            Auth::Extensible:
-                realms:
-                    users:
-                        provider: 'DBIC'
+See L<Dancer2::Plugin::Auth::Extensible> for details on how to use the
+authentication framework.
 
-    You would still need to have provided suitable database connection details
-    to Dancer2::Plugin::DBIC, of course; see the docs for that plugin for full
-    details, but it could be as simple as, e.g.:
 
-        plugins:
-            Auth::Extensible:
-                realms:
-                    users:
-                        provider: 'DBIC'
-            DBIC:
-                default:
-                    dsn: dbi:mysql:database=mydb;host=localhost
-                    schema_class: MyApp::Schema
-                    user: user
-                    pass: secret
+=head1 CONFIGURATION
 
-    A full example showing all options:
+This provider tries to use sensible defaults, in the same manner as
+L<Dancer2::Plugin::Auth::Extensible::Provider::Database>, so you may not need
+to provide much configuration if your database tables look similar to those.
 
-        plugins:
-            Auth::Extensible:
-                realms:
-                    users:
-                        provider: 'DBIC'
+The most basic configuration, assuming defaults for all options, and defining a
+single authentication realm named 'users':
 
-                        # Optionally specify the sources of the data if not the
-                        # defaults (as shown).  See notes below for how these
-                        # generate the resultset names.  If you use standard DBIC
-                        # resultset names, then these and the column names are the
-                        # only settings you might need.  The relationships between
-                        # these resultsets is automatically introspected by
-                        # inspection of the schema.
-                        users_source: 'user'
-                        roles_source: 'role'
-                        user_roles_source: 'user_role'
+    plugins:
+        Auth::Extensible:
+            realms:
+                users:
+                    provider: 'DBIC'
 
-                        # optionally set the column names
-                        users_username_column: username
-                        users_password_column: password
-                        roles_role_column: role
+You would still need to have provided suitable database connection details to
+L<Dancer2::Plugin::DBIC>, of course;  see the docs for that plugin for full
+details, but it could be as simple as, e.g.:
 
-                        # This plugin supports the DPAE record_lastlogin functionality.
-                        # Optionally set the column name:
-                        users_lastlogin_column: lastlogin
+    plugins:
+        Auth::Extensible:
+            realms:
+                users:
+                    provider: 'DBIC'
+        DBIC:
+            default:
+                dsn: dbi:mysql:database=mydb;host=localhost
+                schema_class: MyApp::Schema
+                user: user
+                pass: secret
 
-                        # Optionally set columns for user_password functionality in
-                        # Dancer2::Plugin::Auth::Extensible
-                        users_pwresetcode_column: pw_reset_code
-                        users_pwchanged_column:   # Time of reset column. No default.
+A full example showing all options:
 
-                        # Days after which passwords expire. See logged_in_user_password_expired
-                        # functionality in Dancer2::Plugin::Auth::Extensible
-                        password_expiry_days:       # No default
+    plugins:
+        Auth::Extensible:
+            realms:
+                users:
+                    provider: 'DBIC'
 
-                        # Optionally set the name of the DBIC schema
-                        schema_name: myschema
+                    # Optionally specify the sources of the data if not the
+                    # defaults (as shown).  See notes below for how these
+                    # generate the resultset names.  If you use standard DBIC
+                    # resultset names, then these and the column names are the
+                    # only settings you might need.  The relationships between
+                    # these resultsets is automatically introspected by
+                    # inspection of the schema.
+                    users_source: 'user'
+                    roles_source: 'role'
+                    user_roles_source: 'user_role'
 
-                        # Optionally set additional conditions when searching for the
-                        # user in the database. These are the same format as required
-                        # by DBIC, and are passed directly to the DBIC resultset search
-                        user_valid_conditions:
-                            deleted: 0
-                            account_request:
-                                "<": 1
+                    # optionally set the column names
+                    users_username_column: username
+                    users_password_column: password
+                    roles_role_column: role
 
-                        # Optionally specify a key for the user's roles to be returned in.
-                        # Roles will be returned as role_name => 1 hashref pairs
-                        roles_key: roles
+                    # This plugin supports the DPAE record_lastlogin functionality.
+                    # Optionally set the column name:
+                    users_lastlogin_column: lastlogin
 
-                        # Optionally specify the algorithm when encrypting new passwords
-                        encryption_algorithm: SHA-512
+                    # Optionally set columns for user_password functionality in
+                    # Dancer2::Plugin::Auth::Extensible
+                    users_pwresetcode_column: pw_reset_code
+                    users_pwchanged_column:   # Time of reset column. No default.
 
-                        # If you don't use standard DBIC resultset names, you might
-                        # need to configure these instead:
-                        users_resultset: User
-                        roles_resultset: Role
-                        user_roles_resultset: UserRole
+                    # Days after which passwords expire. See logged_in_user_password_expired
+                    # functionality in Dancer2::Plugin::Auth::Extensible
+                    password_expiry_days:       # No default
 
-                        # Deprecated settings. The following settings were renamed for clarity
-                        # to the *_source settings
-                        users_table:
-                        roles_table:
-                        user_roles_table:
+                    # Optionally set the name of the DBIC schema
+                    schema_name: myschema
 
-    user_source
-        Specifies the source name that contains the users. This will be
-        camelized to generate the resultset name. The relationship to
-        user_roles_source will be introspected from the schema.
+                    # Optionally set additional conditions when searching for the
+                    # user in the database. These are the same format as required
+                    # by DBIC, and are passed directly to the DBIC resultset search
+                    user_valid_conditions:
+                        deleted: 0
+                        account_request:
+                            "<": 1
 
-    role_source
-        Specifies the source name that contains the roles. This will be
-        camelized to generate the resultset name. The relationship to
-        user_roles_source will be introspected from the schema.
+                    # Optionally specify a key for the user's roles to be returned in.
+                    # Roles will be returned as role_name => 1 hashref pairs
+                    roles_key: roles
 
-    user_roles_source
-        Specifies the source name that contains the user_roles joining table.
-        This will be camelized to generate the resultset name. The
-        relationship to the user and role source will be introspected from the
-        schema.
+                    # Optionally specify the algorithm when encrypting new passwords
+                    encryption_algorithm: SHA-512
 
-    users_username_column
-        Specifies the column name of the username column in the users table
+                    # If you don't use standard DBIC resultset names, you might
+                    # need to configure these instead:
+                    users_resultset: User
+                    roles_resultset: Role
+                    user_roles_resultset: UserRole
 
-    users_password_column
-        Specifies the column name of the password column in the users table
+                    # Deprecated settings. The following settings were renamed for clarity
+                    # to the *_source settings
+                    users_table:
+                    roles_table:
+                    user_roles_table:
 
-    roles_role_column
-        Specifies the column name of the role name column in the roles table
 
-    schema_name
-        Specfies the name of the Dancer2::Plugin::DBIC schema to use. If not
-        specified, will default in the same manner as the DBIC plugin.
+=over
 
-    user_valid_conditions
-        Specifies additional search parameters when looking up a user in the
-        users table. For example, you might want to exclude any account this
-        is flagged as deleted or disabled.
 
-        The value of this parameter will be passed directly to DBIC as a
-        search condition. It is therefore possible to nest parameters and use
-        different operators for the condition. See the example config above
-        for an example.
+=cut
 
-    roles_key
-        Specifies a key for the returned user hash to also return the user's
-        roles in. The value of this key will contain a hash ref, which will
-        contain each permission with a value of 1. In your code you might then
-        have:
+=item user_source
 
-            my $user = logged_in_user;
-            return foo_bar($user);
+Specifies the source name that contains the users. This will be camelized to generate
+the resultset name. The relationship to user_roles_source will be introspected from
+the schema.
 
-            sub foo_bar
-            {   my $user = shift;
-                if ($user->{roles}->{beer_drinker}) {
-                   ...
-                }
-            }
+=item role_source
 
-        This isn't intended to replace the "user_has_role" in
-        Dancer2::Plugin::Auth::Extensible keyword. Instead it is intended to
-        make it easier to access a user's roles if the user hash is being
-        passed around (without requiring access to the user_has_role keyword
-        in other modules).
+Specifies the source name that contains the roles. This will be camelized to generate
+the resultset name. The relationship to user_roles_source will be introspected from
+the schema.
 
-    users_resultset
-    roles_resultset
-    user_roles_resultset
-        These configuration values are provided for fine-grain tuning of your
-        DBIC resultset names. If you use standard DBIC naming practices, you
-        will not need to configure these, and they will be generated
-        internally automatically.
+=item user_roles_source
 
-[1mSUGGESTED SCHEMA[0m
-    Please see Schema1 in the tests directory for a suggested schema.
+Specifies the source name that contains the user_roles joining table. This will be
+camelized to generate the resultset name. The relationship to the user and role
+source will be introspected from the schema.
 
-    If producing a schema from scratch, it is recommended that the default
-    resultset and column names are used, as per the default configuration.
+=item users_username_column
+
+Specifies the column name of the username column in the users table
+
+=item users_password_column
+
+Specifies the column name of the password column in the users table
+
+=item roles_role_column
+
+Specifies the column name of the role name column in the roles table
+
+=item schema_name
+
+Specfies the name of the L<Dancer2::Plugin::DBIC> schema to use. If not
+specified, will default in the same manner as the DBIC plugin.
+
+=item user_valid_conditions
+
+Specifies additional search parameters when looking up a user in the users table.
+For example, you might want to exclude any account this is flagged as deleted
+or disabled.
+
+The value of this parameter will be passed directly to DBIC as a search condition.
+It is therefore possible to nest parameters and use different operators for the
+condition. See the example config above for an example.
+
+=item roles_key
+
+Specifies a key for the returned user hash to also return the user's roles in.
+The value of this key will contain a hash ref, which will contain each
+permission with a value of 1. In your code you might then have:
+
+    my $user = logged_in_user;
+    return foo_bar($user);
+
+    sub foo_bar
+    {   my $user = shift;
+        if ($user->{roles}->{beer_drinker}) {
+           ...
+        }
+    }
+
+This isn't intended to replace the L<Dancer2::Plugin::Auth::Extensible/user_has_role>
+keyword. Instead it is intended to make it easier to access a user's roles if the
+user hash is being passed around (without requiring access to the user_has_role
+keyword in other modules).
+
+=item users_resultset
+
+=item roles_resultset
+
+=item user_roles_resultset
+
+These configuration values are provided for fine-grain tuning of your DBIC
+resultset names. If you use standard DBIC naming practices, you will not need
+to configure these, and they will be generated internally automatically.
+
+=back
+
+=head1 SUGGESTED SCHEMA
+
+Please see Schema1 in the tests directory for a suggested schema.
+
+If producing a schema from scratch, it is recommended that the default
+resultset and column names are used, as per the default configuration.
+
+
+=cut
 
