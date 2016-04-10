@@ -20,7 +20,7 @@ WriteMakefile(
         'Carp' => 0,
         'Dancer2::Core::Types' => 0,
         'Dancer2::Plugin::DBIC' => '0.0012',
-        'Dancer2::Plugin::Auth::Extensible' => 0.501,
+        'Dancer2::Plugin::Auth::Extensible' => '0.600',
         'DateTime' => 0,
         'DBIx::Class::ResultClass::HashRefInflator' => 0,
         'String::CamelCase' => 0,
