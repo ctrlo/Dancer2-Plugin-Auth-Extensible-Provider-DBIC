@@ -123,6 +123,11 @@ A full example showing all options:
                     roles_resultset: Role
                     user_roles_resultset: UserRole
 
+                    # Optional: To validate passwords using a method called
+                    # 'check_password' in users_resultset result class
+                    # which takes the password to check as a single argument:
+                    users_password_check: check_password
+
                     # Deprecated settings. The following settings were renamed for clarity
                     # to the *_source settings
                     users_table:
@@ -332,6 +337,10 @@ has users_pwresetcode_column => (
     default => 'pw_reset_code',
 );
 
+has users_password_check => (
+    is => 'ro',
+);
+
 has users_username_column => (
     is      => 'ro',
     default => 'username',
@@ -467,6 +476,13 @@ sub _user_rset {
 
 sub authenticate_user {
     my ($self, $username, $password, %options) = @_;
+
+    if ( my $password_check = $self->users_password_check ) {
+        # check password via result class method
+        my ( $user ) = $self->_user_rset( 'username', $username )->all;
+        return unless $user;
+        return $user->$password_check($password);
+    }
 
     # Look up the user:
     my $user = $self->get_user_details($username);
