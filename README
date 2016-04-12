@@ -105,6 +105,11 @@ CONFIGURATION
                         roles_resultset: Role
                         user_roles_resultset: UserRole
 
+                        # Optional: To validate passwords using a method called
+                        # 'check_password' in users_resultset result class
+                        # which takes the password to check as a single argument:
+                        users_password_check: check_password
+
                         # Deprecated settings. The following settings were renamed for clarity
                         # to the *_source settings
                         users_table:
