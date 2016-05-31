@@ -1,6 +1,6 @@
 Revision history for Dancer2-Plugin-Auth-Extensible-Provider-DBIC
 
-0.600 Tue 12 Apr 15:11:30 CEST 2016
+0.600 Tue 31 May 15:46:22 CEST 2016
 
     * Provider is now a Moo class and has been rehacked to be compatible
       with Plugin2. This means thus provider is not compatible with Dancer2
