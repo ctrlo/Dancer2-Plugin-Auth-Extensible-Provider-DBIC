@@ -468,7 +468,7 @@ sub _user_rset {
 
     # Search based on standard username search, plus any additional
     # conditions in ignore_user
-    my $search = { %$user_valid_conditions, $search_column => $value };
+    my $search = { %$user_valid_conditions, 'me.' . $search_column => $value };
 
     # Look up the user
     $self->schema->resultset($self->users_resultset)->search($search, $options);
