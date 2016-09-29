@@ -55,6 +55,9 @@ details, but it could be as simple as, e.g.:
             realms:
                 users:
                     provider: 'DBIC'
+                    users_resultset: 'User'
+                    roles_resultset: Role
+                    user_roles_resultset: UserRole
         DBIC:
             default:
                 dsn: dbi:mysql:database=mydb;host=localhost
@@ -254,10 +257,53 @@ to configure these, and they will be generated internally automatically.
 
 =head1 SUGGESTED SCHEMA
 
-Please see Schema1 in the tests directory for a suggested schema.
+If you use a schema similar to the examples provided here, you should need minimal 
+configuration to get this authentication provider to work for you.  The examples 
+given here should be MySQL-compatible; minimal changes should be required to use 
+them with other database engines.
 
-If producing a schema from scratch, it is recommended that the default
-resultset and column names are used, as per the default configuration.
+=head2 user Table
+
+You'll need a table to store user accounts in, of course. A suggestion is something 
+like:
+
+     CREATE TABLE user (
+         id int(11) NOT NULL AUTO_INCREMENT,
+		 username varchar(32) NOT NULL,
+         password varchar(40) DEFAULT NULL,
+         name varchar(128) DEFAULT NULL,
+         email varchar(255) DEFAULT NULL,
+         deleted tinyint(1) NOT NULL DEFAULT '0',
+         lastlogin datetime DEFAULT NULL,
+         pw_changed datetime DEFAULT NULL,
+         pw_reset_code varchar(255) DEFAULT NULL,
+         PRIMARY KEY (id)
+     );
+
+All columns from the users table will be returned by the C<logged_in_user> keyword 
+for your convenience.
+
+=head2 role Table
+
+You'll need a table to store a list of available groups in.
+
+	 CREATE TABLE role (
+         id int(11) NOT NULL AUTO_INCREMENT,
+         role varchar(32) NOT NULL,
+         PRIMARY KEY (id)
+     );
+
+=head2 user_role Table
+
+Also requred is a table mapping the users to the roles.
+
+     CREATE TABLE user_role (
+         user_id int(11) NOT NULL,
+         role_id int(11) NOT NULL,
+         PRIMARY KEY (user_id, role_id),
+         FOREIGN KEY (user_id) REFERENCES user(id),
+         FOREIGN KEY (role_id) REFERENCES role(id)
+     );
 
 =cut
 
