@@ -1,5 +1,9 @@
 Revision history for Dancer2-Plugin-Auth-Extensible-Provider-DBIC
 
+0.602 Fri 30 Sep 11:00:57 CEST 2016
+
+    * Add example schema to POD + improve simple config example (Ben Kaufman).
+
 0.601 Fri 26 Aug 12:09:54 CEST 2016
 
     * Remove ambiguity from username search in `_user_rset` sub. This prevents
