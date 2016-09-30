@@ -305,6 +305,36 @@ Also requred is a table mapping the users to the roles.
          FOREIGN KEY (role_id) REFERENCES role(id)
      );
 
+=head1 SEE ALSO
+
+L<Dancer2::Plugin::Auth::Extensible>
+
+L<Dancer2::Plugin::DBIC>
+
+L<Dancer2::Plugin::Auth::Extensible::Provider::Database>
+
+=head1 AUTHORS
+
+Andrew Beverley C<< <a.beverley@ctrlo.com> >>
+
+Rewrite for Plugin2:
+
+Peter Mottram, C<< <peter@sysnix.com> >>
+
+=head1 CONTRIBUTORS
+
+Ben Kaufman (whosgonna)
+
+=head1 LICENSE AND COPYRIGHT
+
+Copyright 2015-2016 Andrew Beverley
+
+This program is free software; you can redistribute it and/or modify it
+under the terms of either: the GNU General Public License as published
+by the Free Software Foundation; or the Artistic License.
+
+See http://dev.perl.org/licenses/ for more information.
+
 =cut
 
 has dancer2_plugin_dbic => (
