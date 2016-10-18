@@ -76,8 +76,7 @@ A full example showing all options:
                     # Should get_user_details return an inflated DBIC row
                     # object? Defaults to false which will return a hashref
                     # inflated using DBIx::Class::ResultClass::HashRefInflator
-                    # instead. This affects also affects what `logged_in_user`
-                    # returns.
+                    # instead. This also affects what `logged_in_user` returns.
                     user_as_object: 1
 
                     # Optionally specify the sources of the data if not the
