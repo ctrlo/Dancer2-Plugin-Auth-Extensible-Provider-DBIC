@@ -1,5 +1,17 @@
 Revision history for Dancer2-Plugin-Auth-Extensible-Provider-DBIC
 
+0.603 Tue 18 Oct 17:08:36 CEST 2016
+
+    [ENHANCEMENTS]
+
+    * Add user_as_object attribute. This allows config to determine whether
+      get_user_details and thus also logged_in_user will return a hash
+      reference (the default) or an inflated DBIC row object (Peter Mottram).
+
+    [BUG FIXES]
+
+    * Remove README.pod (GH#11)
+
 0.602 Fri 30 Sep 11:00:57 CEST 2016
 
     * Add example schema to POD + improve simple config example (Ben Kaufman).
