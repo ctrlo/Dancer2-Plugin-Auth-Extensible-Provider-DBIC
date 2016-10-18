@@ -14,6 +14,7 @@ plugins:
     realms:
       config1:
         provider: DBIC
+        user_as_object: 1
         schema_name: schema1
         users_source: user
         roles_source: role
@@ -27,6 +28,7 @@ plugins:
         encryption_algorithm: SHA-512
       config2:
         provider: DBIC
+        user_as_object: 1
         schema_name: schema2
         users_source: myuser
         roles_source: myrole

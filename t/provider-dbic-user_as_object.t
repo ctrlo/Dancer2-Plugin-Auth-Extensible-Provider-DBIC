@@ -5,7 +5,7 @@ use Test::More;
 
 BEGIN {
     $ENV{DANCER_ENVDIR}      = 't/environments';
-    $ENV{DANCER_ENVIRONMENT} = 'hashref';
+    $ENV{DANCER_ENVIRONMENT} = 'object';
 }
 
 use Dancer2::Plugin::Auth::Extensible::Test;

@@ -1,7 +1,7 @@
 package Dancer2::Plugin::Auth::Extensible::Provider::DBIC;
 
 use Carp;
-use Dancer2::Core::Types qw/Int Str/;
+use Dancer2::Core::Types qw/Bool Int Str/;
 use DateTime;
 use DBIx::Class::ResultClass::HashRefInflator;
 use String::CamelCase qw(camelize);
@@ -72,6 +72,13 @@ A full example showing all options:
             realms:
                 users:
                     provider: 'DBIC'
+
+                    # Should get_user_details return an inflated DBIC row
+                    # object? Defaults to false which will return a hashref
+                    # inflated using DBIx::Class::ResultClass::HashRefInflator
+                    # instead. This affects also affects what `logged_in_user`
+                    # returns.
+                    user_as_object: 1
 
                     # Optionally specify the sources of the data if not the
                     # defaults (as shown).  See notes below for how these
@@ -176,6 +183,14 @@ sub BUILDARGS {
 
     return \%args;
 }
+
+=item user_as_object
+
+Defaults to false.
+
+By default a row object is returned as a simple hash reference using
+L<DBIx::Class::ResultClass::HashRefInflator>. Setting this to true
+causes normal row objects to be returned instead.
 
 =item user_source
 
@@ -336,6 +351,12 @@ by the Free Software Foundation; or the Artistic License.
 See http://dev.perl.org/licenses/ for more information.
 
 =cut
+
+has user_as_object => (
+    is      => 'ro',
+    isa     => Bool,
+    default => 0,
+);
 
 has dancer2_plugin_dbic => (
     is      => 'ro',
@@ -553,25 +574,23 @@ sub _user_rset {
 sub authenticate_user {
     my ($self, $username, $password, %options) = @_;
 
+    my ( $user ) = $self->_user_rset( 'username', $username )->all;
+    return unless $user;
+
     if ( my $password_check = $self->users_password_check ) {
         # check password via result class method
-        my ( $user ) = $self->_user_rset( 'username', $username )->all;
-        return unless $user;
         return $user->$password_check($password);
     }
-
-    # Look up the user:
-    my $user = $self->get_user_details($username);
-    return unless $user;
 
     # OK, we found a user, let match_password (from our base class) take care of
     # working out if the password is correct
     my $password_column = $self->users_password_column;
+
     if ( my $match =
-        $self->match_password( $password, $user->{$password_column} ) )
+        $self->match_password( $password, $user->$password_column ) )
     {
         if ( $options{lastlogin} ) {
-            if ( my $lastlogin = $user->{lastlogin} ) {
+            if ( my $lastlogin = $user->lastlogin ) {
                 my $db_parser = $self->schema->storage->datetime_parser;
                 $lastlogin = $db_parser->parse_datetime($lastlogin);
                 $self->plugin->app->session->write($options{lastlogin} => $lastlogin);
@@ -605,37 +624,27 @@ sub get_user_details {
     my $users_rs = $self->_user_rset(username => $username);
 
     # Inflate to a hashref, otherwise it's returned as a DBIC rset
-    $users_rs->result_class('DBIx::Class::ResultClass::HashRefInflator');
+    $users_rs->result_class('DBIx::Class::ResultClass::HashRefInflator')
+      unless $self->user_as_object;
+
     my ($user) = $users_rs->all;
     
     if (!$user) {
         $self->plugin->app->log( 'debug', "No such user $username" );
         return;
-    } else {
-        if (my $pwchanged = $self->users_pwchanged_column) {
-            # Convert to DateTime object
-            my $db_parser = $self->schema->storage->datetime_parser;
-            $user->{$pwchanged} = $db_parser->parse_datetime($user->{$pwchanged})
-                if $user->{$pwchanged};
-        }
-        if (my $roles_key = $self->roles_key) {
-            my @roles = @{$self->get_user_roles($username)};
-            my %roles = map { $_ => 1 } @roles;
-            $user->{$roles_key} = \%roles;
-        }
-        return $user;
     }
+    return $user;
 }
 
 # Find a user based on a password reset code
 sub get_user_by_code {
     my ($self, $code) = @_;
 
-    my $username_column = $self->users_username_column;
-    my $users_rs        = $self->_user_rset(pw_reset_code => $code);
-    my ($user)          = $users_rs->all;
+    my ($user) = $self->_user_rset( pw_reset_code => $code )->all;
     return unless $user;
-    $user->$username_column;
+
+    my $username_column = $self->users_username_column;
+    return $user->$username_column;
 }
 
 sub create_user {
@@ -759,8 +768,17 @@ sub password_expired {
     my $expiry   = $self->password_expiry_days or return 0; # No expiry set
 
     if (my $pwchanged = $self->users_pwchanged_column) {
-        my $last_changed = $user->{$pwchanged}
-            or return 1; # If not changed then report expired
+        my $last_changed =
+          $self->user_as_object ? $user->$pwchanged : $user->{$pwchanged};
+
+        # If not changed then report expired
+        return 1 unless $last_changed;
+
+        if ( ref($last_changed) ne 'DateTime' ) {
+            # not inflated to DateTime by schema so do it now
+            my $db_parser = $self->schema->storage->datetime_parser;
+            $last_changed = $db_parser->parse_datetime($last_changed);
+        }
         my $duration     = $last_changed->delta_days(DateTime->now);
         $duration->in_units('days') > $expiry ? 1 : 0;
     } else {
