@@ -12,8 +12,6 @@ WriteMakefile(
       : ()),
     BUILD_REQUIRES => {
         'Test::More'  => 0,
-        'Class::Load' => 0,
-        'Path::Tiny'  => 0,
         'DateTime::Format::SQLite' => 0,
     },
     PREREQ_PM => {

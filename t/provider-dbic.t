@@ -2,7 +2,6 @@ use strict;
 use warnings;
 
 use Test::More;
-use Class::Load 'try_load_class';
 use Dancer2::Plugin::Auth::Extensible::Test;
 
 BEGIN {
@@ -11,7 +10,6 @@ BEGIN {
 
 {
     package TestApp;
-    use Path::Tiny;
     use Dancer2;
     use Dancer2::Plugin::DBIC;
     use Dancer2::Plugin::Auth::Extensible 0.501;
