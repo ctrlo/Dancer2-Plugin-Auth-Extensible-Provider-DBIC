@@ -2,3 +2,5 @@
 \.bak$
 \.bak/
 \.old$
+\.swp$
+README.md

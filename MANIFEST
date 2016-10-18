@@ -5,8 +5,8 @@ Makefile.PL
 MANIFEST
 MANIFEST.SKIP
 README
-README.pod
-t/lib/config.yml
+t/environments/hashref.yml
+t/environments/object.yml
 t/lib/Schema1.pm
 t/lib/Schema1/Result/Role.pm
 t/lib/Schema1/Result/User.pm
@@ -15,4 +15,6 @@ t/lib/Schema2.pm
 t/lib/Schema2/Result/Myrole.pm
 t/lib/Schema2/Result/Myuser.pm
 t/lib/Schema2/Result/MyuserRole.pm
+t/manifest.t
 t/provider-dbic.t
+t/provider-dbic-user_as_object.t
