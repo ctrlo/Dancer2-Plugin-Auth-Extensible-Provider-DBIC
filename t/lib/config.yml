@@ -4,10 +4,12 @@ plugins:
       dsn: 'dbi:SQLite:dbname=:memory:'
       on_connect_do: ['PRAGMA foreign_keys = ON']
       schema_class: t::lib::Schema1
+      quote_names: 1
     schema2:
       dsn: 'dbi:SQLite:dbname=:memory:'
       on_connect_do: ['PRAGMA foreign_keys = ON']
       schema_class: t::lib::Schema2
+      quote_names: 1
   Auth::Extensible:
     realms:
       config1:
