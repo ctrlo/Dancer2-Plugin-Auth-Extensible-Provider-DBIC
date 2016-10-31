@@ -575,6 +575,7 @@ sub _user_rset {
 
 sub authenticate_user {
     my ($self, $username, $password, %options) = @_;
+    return unless defined $username && defined $password;
 
     my ( $user ) = $self->_user_rset( 'username', $username )->all;
     return unless $user;
@@ -607,6 +608,8 @@ sub authenticate_user {
 
 sub set_user_password {
     my ( $self, $username, $password ) = @_;
+    return unless defined $username;
+
     my $encrypted       = $self->encrypt_password($password);
     my $password_column = $self->users_password_column;
     my %update          = ( $password_column => $encrypted );
@@ -752,6 +755,7 @@ sub set_user_details {
 
 sub get_user_roles {
     my ($self, $username) = @_;
+    return unless defined $username;
 
     my $role_relationship            = $self->role_relationship;
     my $user_user_roles_relationship = $self->user_user_roles_relationship;
