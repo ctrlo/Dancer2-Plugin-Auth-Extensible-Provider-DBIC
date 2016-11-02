@@ -13,6 +13,7 @@ __PACKAGE__->add_columns(
     pw_reset_code => { data_type => 'varchar', size => 255, is_nullable => 1 },
 );
 __PACKAGE__->set_primary_key('id');
+__PACKAGE__->add_unique_constraint(['username']);
 __PACKAGE__->has_many(
     user_roles => "t::lib::Schema1::Result::UserRole",
     "user_id"

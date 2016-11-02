@@ -22,6 +22,7 @@ WriteMakefile(
         'Dancer2::Plugin::Auth::Extensible' => '0.613',
         'DateTime' => 0,
         'DBIx::Class::ResultClass::HashRefInflator' => 0,
+        'Scalar::Util' => 0,
         'String::CamelCase' => 0,
         'Moo' => 0,
         'namespace::clean' => 0,

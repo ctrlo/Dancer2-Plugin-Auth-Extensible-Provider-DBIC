@@ -4,6 +4,7 @@ use Carp;
 use Dancer2::Core::Types qw/Bool Int Str/;
 use DateTime;
 use DBIx::Class::ResultClass::HashRefInflator;
+use Scalar::Util qw(blessed);
 use String::CamelCase qw(camelize);
 
 use Moo;
@@ -575,7 +576,8 @@ sub _user_rset {
 
 sub authenticate_user {
     my ($self, $username, $password, %options) = @_;
-    return unless defined $username && defined $password;
+    croak "username and password must be defined"
+      unless defined $username && defined $password;
 
     my ( $user ) = $self->_user_rset( 'username', $username )->all;
     return unless $user;
@@ -608,7 +610,8 @@ sub authenticate_user {
 
 sub set_user_password {
     my ( $self, $username, $password ) = @_;
-    return unless defined $username;
+    croak "username and password must be defined"
+      unless defined $username && defined $password;
 
     my $encrypted       = $self->encrypt_password($password);
     my $password_column = $self->users_password_column;
@@ -623,7 +626,8 @@ sub set_user_password {
 # fetched and all columns returned as a hashref.
 sub get_user_details {
     my ($self, $username) = @_;
-    return unless defined $username;
+    croak "username must be defined"
+      unless defined $username;
 
     # Look up the user
     my $users_rs = $self->_user_rset(username => $username);
@@ -652,6 +656,8 @@ sub get_user_details {
 # Find a user based on a password reset code
 sub get_user_by_code {
     my ($self, $code) = @_;
+    croak "code needs to be specified"
+      unless $code && $code ne '';
 
     my ($user) = $self->_user_rset( pw_reset_code => $code )->all;
     return unless $user;
@@ -663,8 +669,10 @@ sub get_user_by_code {
 sub create_user {
     my ($self, %user) = @_;
     my $username_column = $self->users_username_column;
-    my $username        = delete $user{username} # Prevent attempt to update wrong key
-        or croak "Username needs to be specified for create_user";
+    my $username        = delete $user{username}; # Prevent attempt to update wrong key
+    croak "Username not supplied in args"
+      unless defined $username && $username ne '';
+
     $self->schema->resultset($self->users_resultset)->create({
         $username_column => $username
     });
@@ -755,7 +763,8 @@ sub set_user_details {
 
 sub get_user_roles {
     my ($self, $username) = @_;
-    return unless defined $username;
+    croak "username must be defined"
+      unless defined $username;
 
     my $role_relationship            = $self->role_relationship;
     my $user_user_roles_relationship = $self->user_user_roles_relationship;
@@ -784,6 +793,11 @@ sub get_user_roles {
 
 sub password_expired {
     my ($self, $user) = @_;
+    croak "user must be specified"
+      unless defined $user
+      && ( ref($user) eq 'HASH'
+        || ( blessed($user) && $user->isa('DBIx::Class::Row') ) );
+
     my $expiry   = $self->password_expiry_days or return 0; # No expiry set
 
     if (my $pwchanged = $self->users_pwchanged_column) {
