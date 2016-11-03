@@ -11,7 +11,7 @@ use Moo;
 with "Dancer2::Plugin::Auth::Extensible::Role::Provider";
 use namespace::clean;
 
-our $VERSION = '0.603';
+our $VERSION = '0.620';
 
 =head1 NAME 
 
@@ -691,58 +691,56 @@ sub set_user_details {
     $user or return;
 
     # Are we expecting a user_roles key?
-    if ( !$self->user_as_object ) {
-        if ( my $roles_key = $self->roles_key ) {
-            if ( my $new_roles = delete $update{$roles_key} ) {
+    if ( my $roles_key = $self->roles_key ) {
+        if ( my $new_roles = delete $update{$roles_key} ) {
 
-                my $roles_role_column     = $self->roles_role_column;
-                my $users_username_column = $self->users_username_column;
+            my $roles_role_column     = $self->roles_role_column;
+            my $users_username_column = $self->users_username_column;
 
-                my @all_roles =
-                  $self->schema->resultset( $self->roles_resultset )->all;
-                my %existing_roles =
-                  map { $_ => 1 } @{ $self->get_user_roles($username) };
+            my @all_roles =
+              $self->schema->resultset( $self->roles_resultset )->all;
+            my %existing_roles =
+              map { $_ => 1 } @{ $self->get_user_roles($username) };
 
-                foreach my $role (@all_roles) {
-                    my $role_name = $role->$roles_role_column;
+            foreach my $role (@all_roles) {
+                my $role_name = $role->$roles_role_column;
 
-                    if ( $new_roles->{$role_name}
-                        && !$existing_roles{$role_name} )
-                    {
-                        # Needs to be added
-                        $self->schema->resultset( $self->user_roles_resultset )
-                          ->create(
-                            {
-                                $self->user_relationship => {
-                                    $users_username_column => $username,
-                                    %{ $self->user_valid_conditions }
-                                },
-                                $self->role_relationship => {
-                                    $roles_role_column => $role_name
-                                },
-                            }
-                          );
-                    }
-                    elsif ( !$new_roles->{$role_name}
-                        && $existing_roles{$role_name} )
-                    {
-                        # Needs to be removed
-                        $self->schema->resultset( $self->user_roles_resultset )
-                          ->search(
-                            {
-                                $self->user_relationship
-                                  . ".$users_username_column" => $username,
-                                $self->role_relationship
-                                  . ".$roles_role_column" => $role_name,
+                if ( $new_roles->{$role_name}
+                    && !$existing_roles{$role_name} )
+                {
+                    # Needs to be added
+                    $self->schema->resultset( $self->user_roles_resultset )
+                      ->create(
+                        {
+                            $self->user_relationship => {
+                                $users_username_column => $username,
+                                %{ $self->user_valid_conditions }
                             },
-                            {
-                                join => [
-                                    $self->user_relationship,
-                                    $self->role_relationship
-                                ],
-                            }
-                          )->delete;
-                    }
+                            $self->role_relationship => {
+                                $roles_role_column => $role_name
+                            },
+                        }
+                      );
+                }
+                elsif ( !$new_roles->{$role_name}
+                    && $existing_roles{$role_name} )
+                {
+                    # Needs to be removed
+                    $self->schema->resultset( $self->user_roles_resultset )
+                      ->search(
+                        {
+                            $self->user_relationship
+                              . ".$users_username_column" => $username,
+                            $self->role_relationship
+                              . ".$roles_role_column" => $role_name,
+                        },
+                        {
+                            join => [
+                                $self->user_relationship,
+                                $self->role_relationship
+                            ],
+                        }
+                      )->delete;
                 }
             }
         }
