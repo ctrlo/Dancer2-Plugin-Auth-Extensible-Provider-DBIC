@@ -122,7 +122,6 @@ A full example showing all options:
 
                     # Optionally specify a key for the user's roles to be returned in.
                     # Roles will be returned as role_name => 1 hashref pairs
-                    # NOTE: only applies for 'user_as_object: 0'
                     roles_key: roles
 
                     # Optionally specify the algorithm when encrypting new passwords
@@ -239,8 +238,6 @@ It is therefore possible to nest parameters and use different operators for the
 condition. See the example config above for an example.
 
 =item roles_key
-
-B<NOTE:> This option is only available if L</user_as_object> is false.
 
 Specifies a key for the returned user hash to also return the user's roles in.
 The value of this key will contain a hash ref, which will contain each
