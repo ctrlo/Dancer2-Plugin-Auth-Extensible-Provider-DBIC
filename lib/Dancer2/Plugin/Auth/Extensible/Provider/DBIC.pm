@@ -593,9 +593,16 @@ sub authenticate_user {
     {
         if ( $options{lastlogin} ) {
             if ( my $lastlogin = $user->lastlogin ) {
-                my $db_parser = $self->schema->storage->datetime_parser;
-                $lastlogin = $db_parser->parse_datetime($lastlogin);
-                $self->plugin->app->session->write($options{lastlogin} => $lastlogin);
+                if ( ref($lastlogin) eq '' ) {
+                    # not inflated to DateTime
+                    my $db_parser = $self->schema->storage->datetime_parser;
+                    $lastlogin = $db_parser->parse_datetime($lastlogin);
+                }
+                # Stash in session as epoch since we don't want to have to mess
+                # with with stringified data or perhaps session engine barfing
+                # when trying to serialize DateTime object.
+                $self->plugin->app->session->write(
+                    $options{lastlogin} => $lastlogin->epoch );
             }
             $self->set_user_details( $username,
                 $self->users_lastlogin_column => DateTime->now, );
