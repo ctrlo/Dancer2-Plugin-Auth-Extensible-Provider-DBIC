@@ -16,6 +16,7 @@ plugins:
       schema_class: t::lib::Schema3
       quote_names: 1
   Auth::Extensible:
+    record_lastlogin: 1
     realms:
       config1:
         provider: DBIC
