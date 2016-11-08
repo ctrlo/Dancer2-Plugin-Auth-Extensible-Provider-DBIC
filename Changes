@@ -1,5 +1,10 @@
 Revision history for Dancer2-Plugin-Auth-Extensible-Provider-DBIC
 
+0.621 Tue  8 Nov 17:05:00 CET 2016
+
+    * logged_in_user_lastlogin now stored in session as epoch
+    * add record_lastlogin to main test provider options
+
 0.620 Thu  3 Nov 16:25:17 CET 2016
 
     * Reinstate removed roles_key
