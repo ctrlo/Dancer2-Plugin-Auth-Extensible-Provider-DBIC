@@ -7,10 +7,10 @@ sub deploy {
     
     $self->resultset('User')->populate(
         [
-            [ 'id', 'username', 'password', 'name' ],
-            [ 1,    'dave',     'beer',     'David Precious' ],
-            [ 2,    'bob',      'cider',    'Bob Smith' ],
-            [ 3,    'mark',     'wantscider',    'Update here' ],
+            [ 'id', 'username', 'password', 'name', 'email' ],
+            [ 1, 'dave', 'beer',       'David Precious', 'dave@example.com' ],
+            [ 2, 'bob',  'cider',      'Bob Smith',      'bob@example.com' ],
+            [ 3, 'mark', 'wantscider', 'Update here',    'mark@example.com' ],
         ]
     );
 
