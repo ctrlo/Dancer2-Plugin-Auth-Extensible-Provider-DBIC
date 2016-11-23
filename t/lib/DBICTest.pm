@@ -47,7 +47,8 @@ sub runtests {
             # First check that the role doesn't work.
 
             $res = get('/dbic_cider');
-            ok $res->is_redirect, "We cannot yet access CiderDrinker route";
+            is $res->code, 403, "We cannot yet access CiderDrinker route"
+              or diag explain $res;
 
             # add role
 
