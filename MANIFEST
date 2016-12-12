@@ -1,6 +1,7 @@
 Changes
 ignore.txt
 lib/Dancer2/Plugin/Auth/Extensible/Provider/DBIC.pm
+LICENSE
 Makefile.PL
 MANIFEST
 MANIFEST.SKIP
@@ -18,9 +19,9 @@ t/lib/Schema2/Result/Myrole.pm
 t/lib/Schema2/Result/Myuser.pm
 t/lib/Schema2/Result/MyuserRole.pm
 t/lib/Schema3.pm
-t/lib/Schema3/Result/UserRole.pm
 t/lib/Schema3/Result/Role.pm
 t/lib/Schema3/Result/User.pm
+t/lib/Schema3/Result/UserRole.pm
 t/manifest.t
-t/provider-dbic.t
 t/provider-dbic-user_as_object.t
+t/provider-dbic.t
