@@ -1,5 +1,10 @@
 Revision history for Dancer2-Plugin-Auth-Extensible-Provider-DBIC
 
+0.622 Mon 12 Dec 14:30:55 CET 2016
+
+    * Add a LICENSE file (Kwalitee+GitHub) + more skips (GH#15, Shlomi Fish).
+    * Updates for latest test changes in D2PAE.
+
 0.621 Tue  8 Nov 17:05:00 CET 2016
 
     * logged_in_user_lastlogin now stored in session as epoch
