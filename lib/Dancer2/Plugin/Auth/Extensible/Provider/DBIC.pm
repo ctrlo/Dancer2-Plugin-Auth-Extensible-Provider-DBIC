@@ -163,20 +163,32 @@ sub BUILDARGS {
 
     # backwards compat
 
+    # deprecate the *_source settings, but don't change anything yet
+    deprecated_setting('users_source', 'users_resultset')
+        if $args{users_source};
+
+    deprecated_setting('roles_source', 'roles_resultset')
+        if $args{roles_source};
+
+    deprecated_setting('user_roles_source', 'user_roles_resultset')
+        if $args{user_roles_source};
+
+    # deprecate the *_table settings and move them into source, which
+    # will be used in the lazy build for the correct *_resultset settings
     if ( $args{users_table} ) {
-        deprecated_setting( 'users_table', 'users_source' );
+        deprecated_setting( 'users_table', 'users_resultset' );
         $args{users_source} = delete $args{users_table}
           if !$args{users_source};
     }
 
     if ( $args{roles_table} ) {
-        deprecated_setting( 'roles_table', 'roles_source' );
+        deprecated_setting( 'roles_table', 'roles_resultset' );
         $args{roles_source} = delete $args{roles_table}
           if !$args{roles_source};
     }
 
     if ( $args{user_roles_table} ) {
-        deprecated_setting( 'user_roles_table', 'user_roles_source' );
+        deprecated_setting( 'user_roles_table', 'user_roles_resultset' );
         $args{user_roles_source} = delete $args{user_roles_table}
           if !$args{user_roles_source};
     }
