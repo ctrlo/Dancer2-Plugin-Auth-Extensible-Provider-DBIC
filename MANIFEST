@@ -22,6 +22,7 @@ t/lib/Schema3.pm
 t/lib/Schema3/Result/Role.pm
 t/lib/Schema3/Result/User.pm
 t/lib/Schema3/Result/UserRole.pm
+t/deprecation.t
 t/manifest.t
 t/provider-dbic-user_as_object.t
 t/provider-dbic.t

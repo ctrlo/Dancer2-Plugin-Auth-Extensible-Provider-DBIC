@@ -22,10 +22,10 @@ plugins:
         provider: DBIC
         user_as_object: 1
         schema_name: schema1
-        users_source: user
-        roles_source: role
+        users_resultset: User
+        roles_resultset: Role
         roles_key: role
-        user_roles_source: user_role
+        user_roles_resultset: UserRole
         record_lastlogin: 1
         users_pwchanged_column: pw_changed
         password_expiry_days: 1
@@ -37,10 +37,10 @@ plugins:
         provider: DBIC
         user_as_object: 1
         schema_name: schema2
-        users_source: myuser
-        roles_source: myrole
+        users_resultset: Myuser
+        roles_resultset: Myrole
         roles_key: role
-        user_roles_source: myuser_role
+        user_roles_resultset: MyuserRole
         users_username_column: myusername
         users_password_column: mypassword
         roles_role_column: rolename
@@ -50,10 +50,10 @@ plugins:
         provider: DBIC
         user_as_object: 1
         schema_name: schema3
-        users_source: user
-        roles_source: role
+        users_resultset: User
+        roles_resultset: Role
         roles_key: role
-        user_roles_source: user_role
+        user_roles_resultset: UserRole
         record_lastlogin: 1
         users_pwchanged_column: pw_changed
         password_expiry_days: 1

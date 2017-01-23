@@ -80,16 +80,14 @@ A full example showing all options:
                     # instead. This also affects what `logged_in_user` returns.
                     user_as_object: 1
 
-                    # Optionally specify the sources of the data if not the
-                    # defaults (as shown).  See notes below for how these
-                    # generate the resultset names.  If you use standard DBIC
-                    # resultset names, then these and the column names are the
-                    # only settings you might need.  The relationships between
+                    # Optionally specify the DBIC resultset names if you don't
+                    # use the defaults (as shown). These and the column names are the
+                    # only settings you might need. The relationships between
                     # these resultsets is automatically introspected by
                     # inspection of the schema.
-                    users_source: 'user'
-                    roles_source: 'role'
-                    user_roles_source: 'user_role'
+                    users_resultset: User
+                    roles_resultset: Role
+                    user_roles_resultset: UserRole
 
                     # optionally set the column names
                     users_username_column: username
@@ -127,22 +125,10 @@ A full example showing all options:
                     # Optionally specify the algorithm when encrypting new passwords
                     encryption_algorithm: SHA-512
 
-                    # If you don't use standard DBIC resultset names, you might
-                    # need to configure these instead:
-                    users_resultset: User
-                    roles_resultset: Role
-                    user_roles_resultset: UserRole
-
                     # Optional: To validate passwords using a method called
                     # 'check_password' in users_resultset result class
                     # which takes the password to check as a single argument:
                     users_password_check: check_password
-
-                    # Deprecated settings. The following settings were renamed for clarity
-                    # to the *_source settings
-                    users_table:
-                    roles_table:
-                    user_roles_table:
 
 
 =over
@@ -163,20 +149,32 @@ sub BUILDARGS {
 
     # backwards compat
 
+    # deprecate the *_source settings, but don't change anything yet
+    deprecated_setting('users_source', 'users_resultset')
+        if $args{users_source};
+
+    deprecated_setting('roles_source', 'roles_resultset')
+        if $args{roles_source};
+
+    deprecated_setting('user_roles_source', 'user_roles_resultset')
+        if $args{user_roles_source};
+
+    # deprecate the *_table settings and move them into source, which
+    # will be used in the lazy build for the correct *_resultset settings
     if ( $args{users_table} ) {
-        deprecated_setting( 'users_table', 'users_source' );
+        deprecated_setting( 'users_table', 'users_resultset' );
         $args{users_source} = delete $args{users_table}
           if !$args{users_source};
     }
 
     if ( $args{roles_table} ) {
-        deprecated_setting( 'roles_table', 'roles_source' );
+        deprecated_setting( 'roles_table', 'roles_resultset' );
         $args{roles_source} = delete $args{roles_table}
           if !$args{roles_source};
     }
 
     if ( $args{user_roles_table} ) {
-        deprecated_setting( 'user_roles_table', 'user_roles_source' );
+        deprecated_setting( 'user_roles_table', 'user_roles_resultset' );
         $args{user_roles_source} = delete $args{user_roles_table}
           if !$args{user_roles_source};
     }
@@ -192,23 +190,26 @@ By default a row object is returned as a simple hash reference using
 L<DBIx::Class::ResultClass::HashRefInflator>. Setting this to true
 causes normal row objects to be returned instead.
 
-=item user_source
+=item users_resultset
 
-Specifies the source name that contains the users. This will be camelized to generate
-the resultset name. The relationship to user_roles_source will be introspected from
-the schema.
+Defaults to C<User>.
 
-=item role_source
+Specifies the L<DBIx::Class::ResultSet> that contains the users.
+The relationship to user_roles_source will be introspected from the schema.
 
-Specifies the source name that contains the roles. This will be camelized to generate
-the resultset name. The relationship to user_roles_source will be introspected from
-the schema.
+=item roles_resultset
 
-=item user_roles_source
+Defaults to C<Roles>.
 
-Specifies the source name that contains the user_roles joining table. This will be
-camelized to generate the resultset name. The relationship to the user and role
-source will be introspected from the schema.
+Specifies the L<DBIx::Class::ResultSet> that contains the roles.
+The relationship to user_roles_source will be introspected from the schema.
+
+=item user_roles_resultset
+
+Defaults to C<User>.
+
+Specifies the L<DBIx::Class::ResultSet> that contains the user_roles joining table.
+The relationship to the user and role source will be introspected from the schema.
 
 =item users_username_column
 
@@ -258,17 +259,37 @@ keyword. Instead it is intended to make it easier to access a user's roles if th
 user hash is being passed around (without requiring access to the user_has_role
 keyword in other modules).
 
-=item users_resultset
+=back
 
-=item roles_resultset
+=head1 DEPRECATED SETTINGS
 
-=item user_roles_resultset
+=over
 
-These configuration values are provided for fine-grain tuning of your DBIC
-resultset names. If you use standard DBIC naming practices, you will not need
-to configure these, and they will be generated internally automatically.
+=item user_source
+
+=item user_table
+
+Specifies the source name that contains the users. This will be camelized to generate
+the resultset name. The relationship to user_roles_source will be introspected from
+the schema.
+
+=item role_source
+
+=item role_table
+
+Specifies the source name that contains the roles. This will be camelized to generate
+the resultset name. The relationship to user_roles_source will be introspected from
+the schema.
+
+=item user_roles_source
+
+=item user_roles_table
 
 =back
+
+Specifies the source name that contains the user_roles joining table. This will be
+camelized to generate the resultset name. The relationship to the user and role
+source will be introspected from the schema.
 
 =head1 SUGGESTED SCHEMA
 
