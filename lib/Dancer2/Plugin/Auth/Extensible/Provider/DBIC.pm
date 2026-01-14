@@ -11,7 +11,7 @@ use Moo;
 with "Dancer2::Plugin::Auth::Extensible::Role::Provider";
 use namespace::clean;
 
-our $VERSION = '0.623';
+our $VERSION = '0.625';
 
 =head1 NAME 
 
@@ -600,7 +600,7 @@ sub authenticate_user {
     croak "username and password must be defined"
       unless defined $username && defined $password;
 
-    my ( $user ) = $self->_user_rset( 'username', $username )->all;
+    my ( $user ) = $self->_user_rset( username => $username )->all;
     return unless $user;
 
     if ( my $password_check = $self->users_password_check ) {
@@ -612,28 +612,33 @@ sub authenticate_user {
     # working out if the password is correct
     my $password_column = $self->users_password_column;
 
-    if ( my $match =
-        $self->match_password( $password, $user->$password_column ) )
-    {
-        if ( $options{lastlogin} ) {
-            if ( my $lastlogin = $user->lastlogin ) {
-                if ( ref($lastlogin) eq '' ) {
-                    # not inflated to DateTime
-                    my $db_parser = $self->schema->storage->datetime_parser;
-                    $lastlogin = $db_parser->parse_datetime($lastlogin);
-                }
-                # Stash in session as epoch since we don't want to have to mess
-                # with with stringified data or perhaps session engine barfing
-                # when trying to serialize DateTime object.
-                $self->plugin->app->session->write(
-                    $options{lastlogin} => $lastlogin->epoch );
-            }
-            $self->set_user_details( $username,
-                $self->users_lastlogin_column => DateTime->now, );
-        }
-        return $match;
+    my $match = $self->match_password( $password, $user->$password_column );
+    return unless $match && $match->{valid};    # Make sure we return nothing
+
+    if ( $match->{legacy} ) {
+        my $new_hash = $self->encrypt_password($password);
+        $user->update({ $password_column => $new_hash });
     }
-    return;    # Make sure we return nothing
+
+    if ( $options{lastlogin} ) {
+        if ( my $lastlogin = $user->lastlogin ) {
+            if ( ref($lastlogin) eq '' ) {
+                # not inflated to DateTime
+                my $db_parser = $self->schema->storage->datetime_parser;
+                $lastlogin = $db_parser->parse_datetime($lastlogin);
+            }
+            # Stash in session as epoch since we don't want to have to mess
+            # with with stringified data or perhaps session engine barfing
+            # when trying to serialize DateTime object.
+            $self->plugin->app->session->write(
+                $options{lastlogin} => $lastlogin->epoch 
+            );
+        }
+        $self->set_user_details( $username,
+            $self->users_lastlogin_column => DateTime->now, 
+        );
+    }
+    return 1;
 }
 
 sub set_user_password {
