@@ -613,7 +613,7 @@ sub authenticate_user {
     my $password_column = $self->users_password_column;
 
     my $match = $self->match_password( $password, $user->$password_column );
-    return unless $match && $match->{valid};    # Make sure we return nothing
+    return unless $match && $match->{valid} == 1;    # Make sure we return nothing
 
     if ( $match->{legacy} ) {
         my $new_hash = $self->encrypt_password($password);
