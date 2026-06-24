@@ -612,13 +612,13 @@ sub authenticate_user {
     # working out if the password is correct
     my $password_column = $self->users_password_column;
 
-    my $match = $self->match_password( $password, $user->$password_column );
-    return unless $match && $match->{valid} == 1;    # Make sure we return nothing
-
-    if ( $match->{legacy} ) {
-        my $new_hash = $self->encrypt_password($password);
+    my $rehash_cb = sub {
+        my ($new_hash) = @_;
         $user->update({ $password_column => $new_hash });
-    }
+    };
+
+    my $match = $self->match_password( $password, $user->$password_column, $rehash_cb );
+    return unless $match;    # Make sure we return nothing
 
     if ( $options{lastlogin} ) {
         if ( my $lastlogin = $user->lastlogin ) {
