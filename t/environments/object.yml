@@ -31,7 +31,8 @@ plugins:
         password_expiry_days: 1
         user_valid_conditions:
             deleted: 0
-        encryption_algorithm: SHA-512
+        encryption_algorithm:
+            module: Argon2
       config2:
         priority: 10
         provider: DBIC
@@ -59,4 +60,5 @@ plugins:
         password_expiry_days: 1
         user_valid_conditions:
             deleted: 0
-        encryption_algorithm: SHA-512
+        encryption_algorithm:
+            module: Argon2

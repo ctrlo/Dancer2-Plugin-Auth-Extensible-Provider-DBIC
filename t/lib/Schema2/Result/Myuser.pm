@@ -2,7 +2,7 @@ package t::lib::Schema2::Result::Myuser;
 use base qw/DBIx::Class::Core/;
 __PACKAGE__->table('myuser');
 __PACKAGE__->add_columns(
-    id       => { data_type => 'integer' },
+    id       => { data_type => 'integer', is_auto_increment => 1 },
     myusername => { data_type => 'varchar', size => 32 },
     mypassword => { data_type => 'varchar', size => 40, is_nullable => 1 },
     name     => { data_type => 'varchar', size => 128, is_nullable => 1 },

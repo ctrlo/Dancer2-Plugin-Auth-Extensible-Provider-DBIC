@@ -65,6 +65,29 @@ sub runtests {
 
             # cleanup
             $res = post('/logout');
+
+
+            # password checks
+            $res = post(
+              '/login',
+              [
+                username => 'hashedpassword',
+                password => 'password',
+                realm    => $realm,
+              ]
+            );
+
+            ok $res->is_redirect, "/login with hashed password looks good";
+
+            is get('/loggedin')->content, "You are logged in",
+              "... and checking /loggedin route shows we are logged in via hashed password";
+
+            $res = get("/dbic_fetch_password/$realm");
+            like $res->content, qr/^\$argon2id\$.+$/, "Previous hashed password successfully rehashed/$realm"
+              or diag explain $res;
+
+            $res = post('/logout');
+
         }
     };
 }
