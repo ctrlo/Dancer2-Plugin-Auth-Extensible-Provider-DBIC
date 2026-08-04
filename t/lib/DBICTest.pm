@@ -21,7 +21,7 @@ sub runtests {
     subtest "DBIC provider-specific tests" => sub {
         my $res;
 
-        for my $realm (qw/config1 config2/) {
+        for my $realm (qw/config1 config2 config3/) {
 
             # check user is not yet logged in
  
@@ -83,8 +83,13 @@ sub runtests {
               "... and checking /loggedin route shows we are logged in via hashed password";
 
             $res = get("/dbic_fetch_password/$realm");
-            like $res->content, qr/^\$argon2id\$.+$/, "Previous hashed password successfully rehashed/$realm"
-              or diag explain $res;
+            unless ($realm eq 'config1') {
+              like $res->content, qr/^\$argon2id\$.+$/, "Previous hashed password successfully rehashed/$realm"
+                or diag explain $res;
+            } else {
+              like $res->content, qr/^\$6\$.+$/, "Previous hashed password successfully rehashed/$realm"
+                or diag explain $res;
+            }
 
             $res = post('/logout');
 

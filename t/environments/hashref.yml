@@ -31,8 +31,7 @@ plugins:
         password_expiry_days: 1
         user_valid_conditions:
             deleted: 0
-        encryption_algorithm:
-            module: Argon2
+        encryption_algorithm: SHA-512
       config2:
         priority: 10
         provider: DBIC
@@ -52,7 +51,7 @@ plugins:
         user_as_object: 0
         schema_name: schema3
         users_resultset: User
-        roles_role_column: Role
+        roles_resultset: Role
         roles_key: role
         user_roles_resultset: UserRole
         record_lastlogin: 1
@@ -62,3 +61,4 @@ plugins:
             deleted: 0
         encryption_algorithm: 
             module: Argon2
+        validator: SHA-256
