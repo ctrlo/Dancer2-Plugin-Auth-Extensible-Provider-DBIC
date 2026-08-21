@@ -122,8 +122,11 @@ A full example showing all options:
                     # Roles will be returned as role_name => 1 hashref pairs
                     roles_key: roles
 
-                    # Optionally specify the algorithm when encrypting new passwords
-                    encryption_algorithm: SHA-512
+                    # Optionally specify the algorithms when encrypting new and validating current passwords
+                    encryption_algorithm: Argon2
+                    validator:
+                        module: Linux
+                        type: SHA-512
 
                     # Optional: To validate passwords using a method called
                     # 'check_password' in users_resultset result class
