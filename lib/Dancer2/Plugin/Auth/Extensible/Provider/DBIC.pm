@@ -122,8 +122,10 @@ A full example showing all options:
                     # Roles will be returned as role_name => 1 hashref pairs
                     roles_key: roles
 
-                    # Optionally specify the algorithms when encrypting new and validating current passwords
+                    # Optionally specify the algorithm when encrypting new passwords
                     encryption_algorithm: Argon2
+
+					# Optionally specify the algorithm when authenticating current passwords
                     validator:
                         module: Linux
                         type: SHA-512
@@ -603,7 +605,7 @@ sub authenticate_user {
     croak "username and password must be defined"
       unless defined $username && defined $password;
 
-    my ( $user ) = $self->_user_rset( username => $username )->all;
+    my ( $user ) = $self->_user_rset( 'username', $username )->all;
     return unless $user;
 
     if ( my $password_check = $self->users_password_check ) {
