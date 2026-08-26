@@ -82,6 +82,8 @@ sub runtests {
             is get('/loggedin')->content, "You are logged in",
               "... and checking /loggedin route shows we are logged in via hashed password";
 
+            # config1 and config2 are both used to test backwards compatability and re-hashing to either Argon2
+            # or Linux SHA-512. config3 is used to test re-hashing from Linux SHA-256 to Argon2.
             $res = get("/dbic_fetch_password/$realm");
             unless ($realm eq 'config1') {
               like $res->content, qr/^\$argon2id\$.+$/, "Previous hashed password successfully rehashed/$realm"
