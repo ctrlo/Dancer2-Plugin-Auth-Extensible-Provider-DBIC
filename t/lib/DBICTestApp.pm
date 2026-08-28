@@ -21,5 +21,22 @@ get '/dbic_cider' => require_role CiderDrinker => sub {
     "You can have a cider";
 };
 
+get '/dbic_fetch_password/:realm' => sub {
+    my $realm = param 'realm';
+    my $user  = get_user_details 'hashedpassword', $realm;
+    my $password;
+    if ( blessed($user) ) {
+        if ( $user->isa('DBIx::Class::Row') ) {
+            my %cols = $user->get_columns;
+            $password = $cols{password} // $cols{mypassword};
+        }
+    } 
+    elsif ( ref($user) eq 'HASH' ) {
+        $password = $user->{password} // $user->{mypassword};
+    }
+
+    $password;
+};
+
 
 1;

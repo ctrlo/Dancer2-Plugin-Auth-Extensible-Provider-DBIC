@@ -9,7 +9,7 @@ sub deploy {
         [
             [ 'id', 'myusername', 'mypassword' ],
             [ 1,    'burt',     'bacharach' ],
-            [ 2, 'hashedpassword', '{SSHA}+2u1HpOU7ak6iBR6JlpICpAUvSpA/zBM' ],
+            [ 2, 'hashedpassword', '{SSHA}iFLZs/A/YYTB13U60mqNdMqD6jElkY7V' ],
             [ 3,    'mark',     'wantscider' ],
         ]
     );
