@@ -622,8 +622,8 @@ sub authenticate_user {
         $user->update({ $password_column => $new_hash });
     };
 
-    my $match = $self->match_password( $password, $user->$password_column, $rehash_cb );
-    return unless $match;    # Make sure we return nothing
+    my $match = $self->match_password( $password, $user->$password_column, $rehash_cb )
+        or return;    # Make sure we return nothing
 
     if ( $options{lastlogin} ) {
         if ( my $lastlogin = $user->lastlogin ) {
